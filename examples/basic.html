@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OFD.js - 基础示例</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .control-panel {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+    }
+
+    .file-input-wrapper input[type="file"] {
+      position: absolute;
+      left: -9999px;
+    }
+
+    .file-input-label {
+      display: inline-block;
+      padding: 10px 20px;
+      background: #0066cc;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.3s;
+    }
+
+    .file-input-label:hover {
+      background: #0052a3;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #218838;
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .scale-control {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    label {
+      font-weight: 500;
+      color: #333;
+    }
+
+    input[type="range"] {
+      width: 150px;
+    }
+
+    .scale-value {
+      min-width: 50px;
+      text-align: right;
+      color: #0066cc;
+      font-weight: 500;
+    }
+
+    .status {
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      display: none;
+    }
+
+    .status.show {
+      display: block;
+    }
+
+    .status.info {
+      background: #e7f3ff;
+      border-left: 4px solid #0066cc;
+      color: #0050b3;
+    }
+
+    .status.success {
+      background: #f6ffed;
+      border-left: 4px solid #28a745;
+      color: #274e2b;
+    }
+
+    .status.error {
+      background: #fff2f0;
+      border-left: 4px solid #dc3545;
+      color: #9c2e2e;
+    }
+
+    .status-message {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .document-info {
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .document-info.show {
+      display: block;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      font-weight: 500;
+      color: #666;
+      min-width: 100px;
+    }
+
+    .info-value {
+      color: #333;
+      text-align: right;
+    }
+
+    .viewer-container {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: #fafafa;
+      min-height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      max-height: 800px;
+    }
+
+    .viewer-container canvas {
+      display: block;
+      margin: auto;
+      background: white;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .placeholder {
+      color: #999;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .file-name {
+      color: #666;
+      font-size: 14px;
+      margin-left: 10px;
+    }
+
+    .pagination {
+      margin-top: 20px;
+      display: none;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .pagination.show {
+      display: flex;
+    }
+
+    .pagination button {
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+
+    .pagination-info {
+      color: #666;
+      font-size: 14px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📄 OFD.js 文档查看器</h1>
+    <p class="subtitle">支持 OFD 格式文档的在线预览和渲染</p>
+
+    <div id="status" class="status">
+      <p id="statusMessage" class="status-message"></p>
+    </div>
+
+    <div class="control-panel">
+      <div class="file-input-wrapper">
+        <input type="file" id="ofdInput" accept=".ofd" />
+        <label for="ofdInput" class="file-input-label">选择 OFD 文件</label>
+        <span id="fileName" class="file-name"></span>
+      </div>
+
+      <div class="scale-control">
+        <label for="scaleInput">缩放比例:</label>
+        <input type="range" id="scaleInput" min="50" max="200" value="100" step="10" disabled />
+        <span id="scaleValue" class="scale-value">100%</span>
+      </div>
+    </div>
+
+    <div id="docInfo" class="document-info">
+      <div class="info-row">
+        <span class="info-label">总页数:</span>
+        <span id="totalPages" class="info-value">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">当前页:</span>
+        <span id="currentPageInfo" class="info-value">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">页面尺寸:</span>
+        <span id="pageSize" class="info-value">-</span>
+      </div>
+    </div>
+
+    <div id="ofdContainer" class="viewer-container">
+      <div class="placeholder">选择 OFD 文件开始预览</div>
+    </div>
+
+    <div id="pagination" class="pagination">
+      <button id="prevBtn" onclick="prevPage()">← 上一页</button>
+      <span id="pageNumber" class="pagination-info">第 - 页</span>
+      <button id="nextBtn" onclick="nextPage()">下一页 →</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { 
+      parseOfdDocument, 
+      renderPage, 
+      calPageBox 
+    } from '../index.js';
+
+    let currentDocument = null;
+    let currentPageIndex = 0;
+
+    // 状态管理
+    function showStatus(message, type = 'info') {
+      const statusEl = document.getElementById('status');
+      const messageEl = document.getElementById('statusMessage');
+      statusEl.className = `status show ${type}`;
+      messageEl.textContent = message;
+    }
+
+    function hideStatus() {
+      document.getElementById('status').classList.remove('show');
+    }
+
+    // 文件选择
+    document.getElementById('ofdInput').addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      document.getElementById('fileName').textContent = file.name;
+      showStatus(`正在加载文件: ${file.name}...`, 'info');
+
+      parseOfdDocument({
+        ofd: file,
+        success: (document) => {
+          currentDocument = document;
+          currentPageIndex = 0;
+          
+          if (!document || !document.pages || document.pages.length === 0) {
+            showStatus('文档格式不正确或不包含页面', 'error');
+            return;
+          }
+
+          showStatus(`✓ 文档加载成功，共 ${document.pages.length} 页`, 'success');
+          hideStatus();
+          
+          // 更新文档信息
+          updateDocumentInfo(document);
+          
+          // 渲染第一页
+          renderCurrentPage();
+          
+          // 更新分页控件
+          updatePaginationControls();
+        },
+        fail: (error) => {
+          showStatus(`✗ 加载失败: ${error.message || error}`, 'error');
+          document.getElementById('ofdContainer').innerHTML = 
+            '<div class="placeholder">加载失败，请检查文件是否有效</div>';
+        }
+      });
+    });
+
+    // 更新文档信息
+    function updateDocumentInfo(document) {
+      const docInfo = document.getElementById('docInfo');
+      docInfo.classList.add('show');
+      
+      document.getElementById('totalPages').textContent = document.pages.length;
+      
+      if (document.pages.length > 0) {
+        const box = calPageBox(document.pages[0]);
+        document.getElementById('pageSize').textContent = 
+          `${Math.round(box.w)} × ${Math.round(box.h)} mm`;
+      }
+    }
+
+    // 渲染当前页
+    function renderCurrentPage() {
+      if (!currentDocument) return;
+      
+      try {
+        renderPage(currentDocument, 'ofdContainer', currentPageIndex)
+          .then(() => {
+            const pageInfo = currentDocument.pages[currentPageIndex];
+            const box = calPageBox(pageInfo);
+            document.getElementById('currentPageInfo').textContent = 
+              `${currentPageIndex + 1}/${currentDocument.pages.length}`;
+            document.getElementById('pageSize').textContent = 
+              `${Math.round(box.w)} × ${Math.round(box.h)} mm`;
+          })
+          .catch(err => {
+            console.error('Rendering error:', err);
+            showStatus(`渲染错误: ${err.message}`, 'error');
+          });
+      } catch (err) {
+        console.error('Error:', err);
+        showStatus(`错误: ${err.message}`, 'error');
+      }
+    }
+
+    // 分页控件
+    function updatePaginationControls() {
+      const pagination = document.getElementById('pagination');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      
+      if (!currentDocument || currentDocument.pages.length <= 1) {
+        pagination.classList.remove('show');
+        return;
+      }
+      
+      pagination.classList.add('show');
+      prevBtn.disabled = currentPageIndex === 0;
+      nextBtn.disabled = currentPageIndex === currentDocument.pages.length - 1;
+      
+      document.getElementById('pageNumber').textContent = 
+        `第 ${currentPageIndex + 1} 页 / 共 ${currentDocument.pages.length} 页`;
+    }
+
+    // 全局函数
+    window.prevPage = function() {
+      if (currentPageIndex > 0) {
+        currentPageIndex--;
+        renderCurrentPage();
+        updatePaginationControls();
+      }
+    };
+
+    window.nextPage = function() {
+      if (currentPageIndex < currentDocument.pages.length - 1) {
+        currentPageIndex++;
+        renderCurrentPage();
+        updatePaginationControls();
+      }
+    };
+
+    // 缩放控制
+    document.getElementById('scaleInput').addEventListener('change', (event) => {
+      document.getElementById('scaleValue').textContent = event.target.value + '%';
+    });
+
+    // 禁用缩放input直到加载文档
+    document.getElementById('scaleInput').disabled = true;
+  </script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+# Source files
+src/
+tests/
+examples/
+
+# Development files
+.git
+.gitignore
+.prettierrc
+.eslintrc.json
+.editorconfig
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Documentation source
+docs/
+CONTRIBUTING.md
+
+# Build/Package
+node_modules/
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test
+jest.config.js
+*.test.js
+*.spec.js
+coverage/
+.nyc_output/
+
+# Others
+README_*.md
+CHANGELOG_*.md
+TODO.md
