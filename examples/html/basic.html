@@ -286,18 +286,15 @@
       <button id="nextBtn" onclick="nextPage()">下一页 →</button>
     </div>
   </div>
-
+  <script src="../../dist/ofd.js"></script>
+  <script>
+    const { parseOfdDocument, renderPage, calPageBox } = window.OFD;
+  </script>
   <script type="module">
-    import { 
-      parseOfdDocument, 
-      renderPage, 
-      calPageBox 
-    } from '../index.js';
-
     let currentDocument = null;
     let currentPageIndex = 0;
+    let currentScale = 1;
 
-    // 状态管理
     function showStatus(message, type = 'info') {
       const statusEl = document.getElementById('status');
       const messageEl = document.getElementById('statusMessage');
@@ -309,126 +306,160 @@
       document.getElementById('status').classList.remove('show');
     }
 
-    // 文件选择
-    document.getElementById('ofdInput').addEventListener('change', (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
+    function getOFDDocument() {
+      return currentDocument?.document || currentDocument;
+    }
 
-      document.getElementById('fileName').textContent = file.name;
-      showStatus(`正在加载文件: ${file.name}...`, 'info');
+    function getRenderWidth() {
+      const container = document.getElementById('ofdContainer');
+      return Math.max((container.clientWidth || 1024) * currentScale, 320);
+    }
 
-      parseOfdDocument({
-        ofd: file,
-        success: (document) => {
-          currentDocument = document;
-          currentPageIndex = 0;
-          
-          if (!document || !document.pages || document.pages.length === 0) {
-            showStatus('文档格式不正确或不包含页面', 'error');
-            return;
-          }
+    function resetViewer(message = '选择 OFD 文件开始预览') {
+      const container = document.getElementById('ofdContainer');
+      container.innerHTML = `<div class="placeholder">${message}</div>`;
+      document.getElementById('docInfo').classList.remove('show');
+      document.getElementById('pagination').classList.remove('show');
+      document.getElementById('currentPageInfo').textContent = '-';
+      document.getElementById('totalPages').textContent = '-';
+      document.getElementById('pageSize').textContent = '-';
+      document.getElementById('pageNumber').textContent = '第 - 页';
+      document.getElementById('prevBtn').disabled = true;
+      document.getElementById('nextBtn').disabled = true;
+      document.getElementById('scaleInput').disabled = true;
+      document.getElementById('scaleInput').value = '100';
+      document.getElementById('scaleValue').textContent = '100%';
+    }
 
-          showStatus(`✓ 文档加载成功，共 ${document.pages.length} 页`, 'success');
-          hideStatus();
-          
-          // 更新文档信息
-          updateDocumentInfo(document);
-          
-          // 渲染第一页
-          renderCurrentPage();
-          
-          // 更新分页控件
-          updatePaginationControls();
-        },
-        fail: (error) => {
-          showStatus(`✗ 加载失败: ${error.message || error}`, 'error');
-          document.getElementById('ofdContainer').innerHTML = 
-            '<div class="placeholder">加载失败，请检查文件是否有效</div>';
-        }
-      });
-    });
+    function updateDocumentInfo() {
+      const doc = getOFDDocument();
+      if (!currentDocument || !doc || !currentDocument.pages?.length) return;
 
-    // 更新文档信息
-    function updateDocumentInfo(document) {
-      const docInfo = document.getElementById('docInfo');
-      docInfo.classList.add('show');
-      
-      document.getElementById('totalPages').textContent = document.pages.length;
-      
-      if (document.pages.length > 0) {
-        const box = calPageBox(document.pages[0]);
-        document.getElementById('pageSize').textContent = 
-          `${Math.round(box.w)} × ${Math.round(box.h)} mm`;
+      document.getElementById('docInfo').classList.add('show');
+      document.getElementById('totalPages').textContent = currentDocument.pages.length;
+
+      const page = currentDocument.pages[currentPageIndex];
+      if (page) {
+        const box = calPageBox(getRenderWidth(), doc, page);
+        document.getElementById('pageSize').textContent = `${Math.round(box.w)} × ${Math.round(box.h)} mm`;
       }
     }
 
-    // 渲染当前页
     function renderCurrentPage() {
-      if (!currentDocument) return;
-      
-      try {
-        renderPage(currentDocument, 'ofdContainer', currentPageIndex)
-          .then(() => {
-            const pageInfo = currentDocument.pages[currentPageIndex];
-            const box = calPageBox(pageInfo);
-            document.getElementById('currentPageInfo').textContent = 
-              `${currentPageIndex + 1}/${currentDocument.pages.length}`;
-            document.getElementById('pageSize').textContent = 
-              `${Math.round(box.w)} × ${Math.round(box.h)} mm`;
-          })
-          .catch(err => {
-            console.error('Rendering error:', err);
-            showStatus(`渲染错误: ${err.message}`, 'error');
-          });
-      } catch (err) {
-        console.error('Error:', err);
-        showStatus(`错误: ${err.message}`, 'error');
+      const container = document.getElementById('ofdContainer');
+      container.innerHTML = '';
+
+      if (!currentDocument || !currentDocument.pages?.length) {
+        resetViewer();
+        return;
       }
+
+      const doc = getOFDDocument();
+      const page = currentDocument.pages[currentPageIndex];
+      const box = calPageBox(getRenderWidth(), doc, page);
+
+      const pageDiv = document.createElement('div');
+      pageDiv.className = 'page-frame';
+      pageDiv.style.cssText = `
+        margin: 0 auto 20px;
+        position: relative;
+        width: ${box.w}px;
+        height: ${box.h}px;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      `;
+
+      renderPage(
+        pageDiv,
+        page,
+        currentDocument.tpls,
+        currentDocument.fontResObj,
+        currentDocument.drawParamResObj,
+        currentDocument.multiMediaResObj
+      );
+
+      container.appendChild(pageDiv);
+      updateDocumentInfo();
+      updatePaginationControls();
     }
 
-    // 分页控件
     function updatePaginationControls() {
       const pagination = document.getElementById('pagination');
       const prevBtn = document.getElementById('prevBtn');
       const nextBtn = document.getElementById('nextBtn');
-      
+
       if (!currentDocument || currentDocument.pages.length <= 1) {
         pagination.classList.remove('show');
         return;
       }
-      
+
       pagination.classList.add('show');
       prevBtn.disabled = currentPageIndex === 0;
       nextBtn.disabled = currentPageIndex === currentDocument.pages.length - 1;
-      
-      document.getElementById('pageNumber').textContent = 
-        `第 ${currentPageIndex + 1} 页 / 共 ${currentDocument.pages.length} 页`;
+      document.getElementById('pageNumber').textContent = `第 ${currentPageIndex + 1} 页 / 共 ${currentDocument.pages.length} 页`;
     }
 
-    // 全局函数
-    window.prevPage = function() {
+    document.getElementById('ofdInput').addEventListener('change', (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      document.getElementById('fileName').textContent = file.name;
+      document.getElementById('scaleInput').disabled = true;
+      showStatus(`正在加载文件: ${file.name}...`, 'info');
+
+      parseOfdDocument({
+        ofd: file,
+        success: (ofdDocument) => {
+          console.log(ofdDocument)
+          currentDocument = ofdDocument[0];
+          currentPageIndex = 0;
+          currentScale = 1;
+          document.getElementById('scaleInput').value = '100';
+          document.getElementById('scaleValue').textContent = '100%';
+
+          if (!currentDocument || !currentDocument.pages || currentDocument.pages.length === 0) {
+            resetViewer('文档格式不正确或不包含页面');
+            showStatus('文档格式不正确或不包含页面', 'error');
+            return;
+          }
+
+          document.getElementById('scaleInput').disabled = false;
+          hideStatus();
+          renderCurrentPage();
+        },
+        fail: (error) => {
+          currentDocument = null;
+          currentPageIndex = 0;
+          resetViewer('加载失败，请检查文件是否有效');
+          showStatus(`✗ 加载失败: ${error.message || error}`, 'error');
+        }
+      });
+    });
+
+    window.prevPage = function () {
       if (currentPageIndex > 0) {
         currentPageIndex--;
         renderCurrentPage();
-        updatePaginationControls();
       }
     };
 
-    window.nextPage = function() {
-      if (currentPageIndex < currentDocument.pages.length - 1) {
+    window.nextPage = function () {
+      if (currentDocument && currentPageIndex < currentDocument.pages.length - 1) {
         currentPageIndex++;
         renderCurrentPage();
-        updatePaginationControls();
       }
     };
 
-    // 缩放控制
-    document.getElementById('scaleInput').addEventListener('change', (event) => {
-      document.getElementById('scaleValue').textContent = event.target.value + '%';
+    document.getElementById('scaleInput').addEventListener('input', (event) => {
+      currentScale = Number(event.target.value) / 100;
+      document.getElementById('scaleValue').textContent = `${event.target.value}%`;
+      if (currentDocument) {
+        renderCurrentPage();
+      }
     });
 
-    // 禁用缩放input直到加载文档
     document.getElementById('scaleInput').disabled = true;
+    resetViewer();
   </script>
 </body>
 </html>

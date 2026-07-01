@@ -43,7 +43,7 @@ parseOfdDocument({
     
     // 2. 渲染文档到页面
     const screenWidth = window.innerWidth;
-    const pages = renderOfd(screenWidth, ofdDocument);
+    const pages = renderOfd(screenWidth, ofdDocument[0]);
     
     // 3. 添加到DOM
     pages.forEach(pageDiv => {
@@ -68,7 +68,7 @@ parseOfdDocument({
   ofd: file,
   success: (ofdDocument) => {
     // 根据设置的缩放比例渲染
-    const pages = renderOfdByScale(ofdDocument);
+    const pages = renderOfdByScale(ofdDocument[0]);
     document.getElementById('container').appendChild(...pages);
   }
 });
@@ -77,50 +77,198 @@ parseOfdDocument({
 console.log('Current scale:', getPageScale());
 ```
 
-### 在浏览器中使用
+### 原生 HTML 中使用
+
+仓库里的 `examples/basic.html` 就是一个完整的原生浏览器示例。它演示了：
+
+- 选择本地 OFD 文件
+- 调用 `parseOfdDocument()` 解析文档
+- 使用 `renderPage()` 渲染当前页
+- 使用 `calPageBox()` 计算页面尺寸
+- 手动实现分页与缩放
+
+如果你是直接引用源码入口，推荐这样写：
 
 ```html
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>OFD 查看器</title>
-  <style>
-    #ofd-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-  </style>
-</head>
-<body>
-  <div id="ofd-container"></div>
-  
-  <script type="module">
-    import { parseOfdDocument, renderOfd } from '@ycsx/ofdjs';
-    
-    // 获取文件输入
-    document.getElementById('fileInput').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      
-      parseOfdDocument({
-        ofd: file,
-        success: (ofdDoc) => {
-          const pages = renderOfd(window.innerWidth - 40, ofdDoc);
-          const container = document.getElementById('ofd-container');
-          container.innerHTML = '';
-          pages.forEach(page => container.appendChild(page));
-        },
-        fail: (error) => {
-          alert('文件解析失败: ' + error.message);
-        }
-      });
+<script type="module">
+  import { parseOfdDocument, renderPage, calPageBox } from '../index.js';
+
+  let currentDocument = null;
+  let currentPageIndex = 0;
+  let currentScale = 1;
+
+  function getOFDDocument() {
+    return currentDocument?.document || currentDocument;
+  }
+
+  function getRenderWidth() {
+    const container = document.getElementById('ofdContainer');
+    return Math.max((container.clientWidth || 1024) * currentScale, 320);
+  }
+
+  function renderCurrentPage() {
+    const container = document.getElementById('ofdContainer');
+    container.innerHTML = '';
+
+    if (!currentDocument?.pages?.length) return;
+
+    const doc = getOFDDocument();
+    const page = currentDocument.pages[currentPageIndex];
+    const box = calPageBox(getRenderWidth(), doc, page);
+
+    const pageDiv = document.createElement('div');
+    pageDiv.style.cssText = `
+      position: relative;
+      width: ${box.w}px;
+      height: ${box.h}px;
+      background: white;
+    `;
+
+    renderPage(
+      pageDiv,
+      page,
+      currentDocument.tpls,
+      currentDocument.fontResObj,
+      currentDocument.drawParamResObj,
+      currentDocument.multiMediaResObj
+    );
+
+    container.appendChild(pageDiv);
+  }
+
+  document.getElementById('ofdInput').addEventListener('change', (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    parseOfdDocument({
+      ofd: file,
+      success: (ofdDocument) => {
+        currentDocument = ofdDocument;
+        currentPageIndex = 0;
+        currentScale = 1;
+        renderCurrentPage();
+      },
+      fail: (error) => {
+        console.error('文件解析失败', error);
+      }
     });
-  </script>
-</body>
-</html>
+  });
+
+  document.getElementById('scaleInput').addEventListener('input', (event) => {
+    currentScale = Number(event.target.value) / 100;
+    if (currentDocument) renderCurrentPage();
+  });
+</script>
 ```
+
+如果你想直接使用打包后的 `dist/ofd.min.js`，则不要用 `import`，而是用普通 `<script>` 引入后从全局对象取 API：
+
+```html
+<script src="../dist/ofd.min.js"></script>
+<script>
+  const { parseOfdDocument, renderPage, calPageBox } = window.OFD;
+</script>
+```
+
+### 在 Vue 3 中使用
+
+仓库里的 `examples/vue/3/src/vue-viewer.vue` 是一个 Vue 3 的集成示例。组件方式的核心思路是：
+
+- 用 `ref` 保存加载状态、错误信息、文件信息和页面容器
+- 在 `change` 事件里调用 `parseOfdDocument()`
+- 解析成功后使用 `renderOfd()` 生成页面 DOM
+- 把生成的页面元素挂到 `ref` 容器里
+
+示例代码如下：
+
+```vue
+<template>
+  <div class="ofd-viewer">
+    <div class="controls">
+      <input
+        type="file"
+        accept=".ofd"
+        @change="handleFileChange"
+        :disabled="loading"
+      />
+      <button v-if="fileInfo" @click="handleClear">清空文档</button>
+    </div>
+
+    <div v-if="loading">正在加载...</div>
+    <div v-if="error">{{ error }}</div>
+
+    <div v-if="fileInfo">
+      <p><strong>文件名:</strong> {{ fileInfo.name }}</p>
+      <p><strong>页数:</strong> {{ fileInfo.pageCount }}</p>
+      <p><strong>大小:</strong> {{ formatSize(fileInfo.size) }}</p>
+    </div>
+
+    <div ref="containerRef" class="viewer">
+      <div ref="pageRef"></div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { parseOfdDocument, renderOfd } from '@ycsx/ofdjs';
+
+const loading = ref(false);
+const error = ref(null);
+const fileInfo = ref(null);
+const containerRef = ref(null);
+const pageRef = ref(null);
+const pageElements = ref([]);
+
+const formatSize = (bytes) => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+};
+
+const handleFileChange = (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  pageElements.value = [];
+  pageRef.value.innerHTML = '';
+  loading.value = true;
+  error.value = null;
+
+  parseOfdDocument({
+    ofd: file,
+    success: (ofdDoc) => {
+      const screenWidth = containerRef.value?.offsetWidth || 1024;
+      pageElements.value = renderOfd(screenWidth, ofdDoc[0]);
+      pageElements.value.forEach((element) => pageRef.value.appendChild(element));
+      fileInfo.value = {
+        name: file.name,
+        pageCount: ofdDoc[0]?.pages?.length || 0,
+        size: file.size,
+      };
+      loading.value = false;
+    },
+    fail: (err) => {
+      error.value = err.message || '文件加载失败';
+      loading.value = false;
+    },
+  });
+};
+
+const handleClear = () => {
+  pageElements.value = [];
+  fileInfo.value = null;
+  error.value = null;
+  pageRef.value.innerHTML = '';
+};
+</script>
+```
+
+> 说明：Vue 3 示例目前以“加载后一次渲染页面”为主，后续如果需要分页、缩放、单页预览等交互，可以在这个模板基础上继续扩展。
+
+> React 和 Vue 2 的示例会在后续补充。
 
 ## API 文档
 

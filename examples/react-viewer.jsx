@@ -24,7 +24,7 @@ export const OfdViewer = () => {
       ofd: file,
       success: (ofdDoc) => {
         const screenWidth = containerRef.current?.offsetWidth || 1024;
-        const pageElements = renderOfd(screenWidth, ofdDoc);
+        const pageElements = renderOfd(screenWidth, ofdDoc[0]);
 
         // 将DOM元素转换为可渲染的形式
         const pageData = pageElements.map((element) => ({
