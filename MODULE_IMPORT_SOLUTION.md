@@ -174,7 +174,7 @@ npm run build
 
 ### 步骤3：使用构建后的文件
 
-**选项A：通过npm（推荐）**
+**选项A：通过npm（推荐）**0
 ```javascript
 // package.json中的main字段指向index.js
 // 项目会通过npm自动解析模块

@@ -1,9 +1,9 @@
-# ofd.js
+# @ycsx/ofdjs
 
 一个用于读取和渲染OFD（开放式文档格式）文件的JavaScript库。
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
-[![npm version](https://img.shields.io/npm/v/ofd?label=npm)](https://www.npmjs.com/package/ofd)
+[![npm version](https://img.shields.io/npm/v/@ycsx/ofdjs?label=npm)](https://www.npmjs.com/package/@ycsx/ofdjs)
 
 ## 功能特性
 
@@ -19,13 +19,13 @@
 使用npm安装：
 
 ```bash
-npm install ofd
+npm install @ycsx/ofdjs
 ```
 
 或使用yarn：
 
 ```bash
-yarn add ofd
+yarn add @ycsx/ofdjs
 ```
 
 ## 快速开始
@@ -33,7 +33,7 @@ yarn add ofd
 ### 基础使用
 
 ```javascript
-import { parseOfdDocument, renderOfd } from 'ofd';
+import { parseOfdDocument, renderOfd } from '@ycsx/ofdjs';
 
 // 1. 解析OFD文件
 parseOfdDocument({
@@ -59,7 +59,7 @@ parseOfdDocument({
 ### 使用缩放功能
 
 ```javascript
-import { parseOfdDocument, renderOfdByScale, setPageScale, getPageScale } from 'ofd';
+import { parseOfdDocument, renderOfdByScale, setPageScale, getPageScale } from '@ycsx/ofdjs';
 
 // 设置缩放比例（1.0 = 100%）
 setPageScale(1.2);
@@ -97,7 +97,7 @@ console.log('Current scale:', getPageScale());
   <div id="ofd-container"></div>
   
   <script type="module">
-    import { parseOfdDocument, renderOfd } from 'ofd';
+    import { parseOfdDocument, renderOfd } from '@ycsx/ofdjs';
     
     // 获取文件输入
     document.getElementById('fileInput').addEventListener('change', (e) => {

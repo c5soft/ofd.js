@@ -294,10 +294,10 @@
       </div>
     </div>
   </div>
-
+  <script src="../dist/ofd.js"></script>
   <script type="module">
     // 导入 OFD.js 库
-    import { parseOfdDocument, renderOfd, setPageScale, getPageScale } from '../dist/ofd.js';
+    const { parseOfdDocument, renderOfd, setPageScale, getPageScale } = OFD;
 
     // DOM 元素
     const fileInput = document.getElementById('fileInput');
