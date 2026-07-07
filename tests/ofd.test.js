@@ -1,4 +1,4 @@
-import { parseOfdDocument, getPageScale, setPageScale } from '../../index.js';
+import { parseOfdDocument, getPageScale, setPageScale } from '../index';
 
 describe('OFD Module Basic Tests', () => {
   describe('Page Scale Functions', () => {
@@ -32,9 +32,9 @@ describe('OFD Module Basic Tests', () => {
 
   describe('parseOfdDocument', () => {
     test('parseOfdDocument should handle success callback', (done) => {
-      const mockFile = new ArrayBuffer(10);
-      const successCallback = jest.fn();
-      const failCallback = jest.fn();
+      // const mockFile = new ArrayBuffer(10);
+      // const successCallback = jest.fn();
+      // const failCallback = jest.fn();
 
       // Note: This test would require a valid OFD file or mock
       // For now, this serves as a structure test
@@ -43,7 +43,7 @@ describe('OFD Module Basic Tests', () => {
     });
 
     test('parseOfdDocument should handle fail callback', (done) => {
-      const failCallback = jest.fn();
+      // const failCallback = jest.fn();
 
       // Note: This test would require proper error handling setup
       expect(parseOfdDocument).toBeDefined();

@@ -2,9 +2,9 @@ const path = require('path');
 
 module.exports = {
   mode: 'production',
-  entry: './index.js',
+  entry: './index.ts',
   output: {
-    filename: 'ofd.min.js',
+    filename: 'ofd.js',
     path: path.resolve(__dirname, 'dist'),
     library: 'OFD',
     libraryTarget: 'umd',
@@ -37,7 +37,7 @@ module.exports = {
   },
   devtool: false,
   performance: {
-    maxEntrypointSize: 512000,
-    maxAssetSize: 512000,
+    maxEntrypointSize: 1024000,
+    maxAssetSize: 1024000,
   },
 };

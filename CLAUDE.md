@@ -26,7 +26,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 入口与全局 Polyfill
 
-`index.ts` 是构建入口，导出 9 个公开 API 和 4 个 TypeScript 类型。它在模块顶部设置了一个关键 polyfill：
+`index.ts` 是构建入口，重新导出来自 `src/ofd/ofd.ts` 的公开 API 和 TypeScript 类型。它在模块顶部设置了一个关键 polyfill：
 
 ```ts
 if (typeof window !== 'undefined' && typeof global === 'undefined') {
@@ -35,6 +35,26 @@ if (typeof window !== 'undefined' && typeof global === 'undefined') {
 ```
 
 这是 `ofd-xml-parser` 运行所必需的（它依赖 `global.xmlParseFlag`），构建后的 ESM/IIFE 产物会自动包含此项。
+
+### 公开 API
+
+| API | 说明 |
+| --- | --- |
+| `parseOfdDocument(options)` | 解析 OFD 文档，支持 URL/File/ArrayBuffer 输入 |
+| `renderOfd(screenWidth, ofd)` | 按指定屏幕宽度（像素）渲染所有页面 |
+| `renderOfdByScale(ofd)` | 使用预配置的全局缩放渲染所有页面 |
+| `setPageScale(scale)` | 设置全局页面缩放倍数 |
+| `getPageScale()` | 获取当前全局页面缩放倍数 |
+
+### 公开类型
+
+- `PageBox` - 页面尺寸信息（`w`, `h`，像素）
+- `Page` - 页面对象
+- `OFDDocument` - 解析后的文档对象（含 `pages`, `document`, `tpls`, 各种资源）
+- `DocumentInfo` - 文档信息
+- `ParseOptions` - 解析选项
+
+> 注: `calPageBox`, `calPageBoxScale`, `renderPage` 为内部 API，源代码导出但在最终发布的类型声明中被移除。
 
 ## 目录结构
 
@@ -46,8 +66,7 @@ src/
 │   ├── ofd_render.ts       # 页面渲染 (Canvas 路径 + SVG 文本 + DOM 图像)
 │   ├── ofd_util.ts         # 几何计算、坐标转换、颜色解析、HTML 解码
 │   ├── ses_signature_parser.ts  # SES 电子印章 ASN.1 解析
-│   ├── verify_signature_util.ts # SM2/RSA 签名验证 + SM3/MD5/SHA1 摘要
-│   ├── sm3.ts              # 纯 TS 实现 SM3 国密哈希 (GM/T 0004-2012)
+│   ├── verify_signature_util.ts # SM2/RSA 签名验证 + SM3/MD5/SHA1 摘要 (SM3 from sm-crypto)
 │   └── lapo_asn1js.d.ts    # @lapo/asn1js 类型声明
 └── jbig2/                  # JBIG2 图像解码 (TypeScript)
     ├── jbig2.ts            # 主解码器 (ISO/IEC 14492)
@@ -103,7 +122,7 @@ dist/                       # 构建输出
 - **颜色**: OFD 支持 RGB、CMYK、Gray；代码通过 `CT_Color` 的 `@_Value` 属性解析，CMYK 转换为 RGB。
 - **JBIG2**: 二值图像压缩（用于印章图片）。解码流程: 解析段头→段类型路由（SymbolDict/TextRegion/GenericRegion/Halftone/PatternDict）→算术解码器→位图输出。
 - **全局缩放**: 模块级变量 `pageScale`，通过 `setPageScale()` / `getPageScale()` 访问。
-- **CSP 兼容**: `bun build` 使用 `--external:crypto` 避免 Node.js crypto polyfill；构建后移除 `new Function()` 调用。
+- **CSP 兼容**: `bun build` 使用 `--external:crypto` 避免 Node.js crypto polyfill；构建后自动移除两处 `new Function()` 调用（来自 setimmediate 和 get-intrinsic），使产物兼容 Content Security Policy 环境。
 
 ### 构建系统
 
@@ -117,7 +136,7 @@ dist/                       # 构建输出
 | 包 | 用途 |
 | --- | --- |
 | `jszip` | ZIP 解压（OFD 是 ZIP 容器） |
-| `ofd-xml-parser` | OFD XML→JSON 解析 |
+| `fast-xml-parser` | XML→JSON 解析（OFD 文件内部是 XML） |
 | `@xmldom/xmldom` | XML 解析 |
 | `jsrsasign` | RSA 签名验证 + ASN.1 处理 |
 | `sm-crypto` | 国密 SM2/SM3 算法 |
@@ -125,7 +144,6 @@ dist/                       # 构建输出
 | `js-md5` / `js-sha1` | MD5/SHA1 哈希（签名摘要验证） |
 | `core-js` | 旧浏览器 polyfills |
 | `web-streams-polyfill` | ReadableStream 兼容 |
-| `jszip-utils` | 从 URL 加载 ZIP 内容 |
 
 ## 注意事项
 

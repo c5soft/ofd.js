@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useRef } from 'react';
-import { parseOfdDocument, renderOfd } from '@ycsx/ofdjs';
+import { parseOfdDocument, renderOfd } from 'ofdts';
 
 export const OfdViewer = () => {
   const [pages, setPages] = useState([]);

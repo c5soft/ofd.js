@@ -15,8 +15,8 @@ console.log(`\n📦 Building ofd.js v${packageJson.version}\n`);
 
 // Validate that all necessary files exist
 const requiredFiles = [
-  'index.js',
-  'index.d.ts',
+  'index.ts',
+  'tsconfig.json',
   'package.json',
   'LICENSE',
   'README.md',
@@ -58,17 +58,17 @@ validations.forEach(([field, message]) => {
   }
 });
 
-// Check for TypeScript definitions
-console.log('\n✓ Checking TypeScript definitions...');
-const dtsPath = path.join(projectRoot, 'index.d.ts');
-if (fs.existsSync(dtsPath)) {
-  console.log('  ✓ TypeScript definitions found');
+// Check for TypeScript definitions (generated during build)
+console.log('\n✓ Checking TypeScript source files...');
+const tsEntry = path.join(projectRoot, 'index.ts');
+if (fs.existsSync(tsEntry)) {
+  console.log('  ✓ TypeScript entry found (declarations generated at build time)');
 } else {
-  console.log('  ⚠ TypeScript definitions not found');
+  console.log('  ⚠ TypeScript entry not found');
 }
 
 console.log('\n✅ Build validation complete!\n');
 console.log('📝 Next steps:');
-console.log('  1. Run "npm test" to execute tests');
-console.log('  2. Run "npm run lint" to check code quality');
+console.log('  1. Run "bun test" to execute tests');
+console.log('  2. Run "bun run lint" to check code quality');
 console.log('  3. Run "npm publish" to publish to npm\n');

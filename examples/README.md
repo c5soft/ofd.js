@@ -27,7 +27,7 @@ open examples/basic-viewer.html
   <body>
     <!-- HTML 结构 -->
     <script type="module">
-      import { parseOfdDocument, renderOfd } from '@ycsx/ofdjs';
+      import { parseOfdDocument, renderOfd } from 'ofdts';
       // 使用代码
     </script>
   </body>
@@ -55,7 +55,7 @@ import OfdViewer from './examples/react-viewer.jsx';
 ```
 
 **集成步骤**:
-1. 安装OFD包: `npm install @ycsx/ofdjs`
+1. 安装OFD包: `bun add ofdts`
 2. 复制 `react-viewer.jsx` 到你的项目
 3. 在你的组件中导入并使用
 
@@ -86,7 +86,7 @@ export default function App() {
 
 **集成步骤**:
 1. 确保你的项目使用Vue 3
-2. 安装OFD包: `npm install @ycsx/ofdjs`
+2. 安装OFD包: `bun add ofdts`
 3. 复制 `vue-viewer.vue` 到你的项目
 4. 注册并使用组件
 
@@ -110,7 +110,7 @@ import OfdViewer from 'path/to/vue-viewer.vue';
 ### 1. 原生JavaScript
 
 ```javascript
-import { parseOfdDocument, renderOfd } from '@ycsx/ofdjs';
+import { parseOfdDocument, renderOfd } from 'ofdts';
 
 // 选择文件
 const file = document.getElementById('fileInput').files[0];
@@ -134,7 +134,7 @@ parseOfdDocument({
 ### 2. React中使用
 
 ```jsx
-import { parseOfdDocument, renderOfd } from '@ycsx/ofdjs';
+import { parseOfdDocument, renderOfd } from 'ofdts';
 import { useState, useRef } from 'react';
 
 export function OfdViewer() {

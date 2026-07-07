@@ -1,16 +1,29 @@
-import { renderOfd, renderOfdByScale } from '../../index.js';
+import { JSDOM } from 'jsdom';
+import { renderOfd, renderOfdByScale } from '../index';
+
+const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+global.document = dom.window.document;
+global.window = dom.window;
 
 describe('OFD Rendering Functions', () => {
   const mockOfdDocument = {
     pages: [
       {
         'page-1': {
-          /* mock page content */
+          json: {
+            'ofd:Area': {
+              'ofd:PhysicalBox': '0 0 210 297'
+            }
+          }
         },
       },
     ],
     document: {
-      /* mock document info */
+      'ofd:CommonData': {
+        'ofd:PageArea': {
+          'ofd:PhysicalBox': '0 0 210 297'
+        }
+      }
     },
     tpls: {},
     fontResObj: {},

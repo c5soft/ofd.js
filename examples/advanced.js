@@ -14,7 +14,7 @@ import {
   calPageBox,
   setPageScale,
   getPageScale
-} from '../index.js';
+} from '../index.ts';
 
 class OFDViewer {
   constructor(containerId) {

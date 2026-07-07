@@ -46,7 +46,7 @@ xdg-open examples/basic-viewer.html
 python -m http.server 8000
 
 # 使用Node.js http-server
-npm install -g http-server
+bun install -g http-server
 http-server
 
 # 使用Live Server扩展（VSCode）
@@ -66,7 +66,7 @@ import {
   renderOfd,           // 渲染文档到DOM
   setPageScale,        // 设置缩放比例
   getPageScale         // 获取当前缩放比例
-} from '../index.js';
+} from '../index.ts';
 ```
 
 ### 使用流程
@@ -101,7 +101,7 @@ import {
 ### 解析OFD文件
 
 ```javascript
-import { parseOfdDocument } from '../index.js';
+import { parseOfdDocument } from '../index.ts';
 
 const file = document.getElementById('fileInput').files[0];
 
@@ -120,7 +120,7 @@ parseOfdDocument({
 ### 渲染文档
 
 ```javascript
-import { renderOfd } from '../index.js';
+import { renderOfd } from '../index.ts';
 
 // 获取返回的DOM元素数组
 const pages = renderOfd(1024, ofdDocument);
@@ -134,7 +134,7 @@ pages.forEach(pageDiv => {
 ### 缩放控制
 
 ```javascript
-import { setPageScale, getPageScale } from '../index.js';
+import { setPageScale, getPageScale } from '../index.ts';
 
 // 设置缩放比例
 setPageScale(1.5);  // 150%
@@ -214,7 +214,7 @@ const fileSize = document.getElementById('fileSize');
    ```
    Error: Failed to resolve module specifier "ofd"
    ```
-   **解决**：确保使用相对路径 `../index.js` 而不是 npm 包名
+   **解决**：确保使用相对路径 `../index.ts` 而不是 npm 包名
 
 2. **CORS错误**（某些浏览器）
    ```

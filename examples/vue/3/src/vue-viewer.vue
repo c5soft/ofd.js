@@ -48,7 +48,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { parseOfdDocument, renderOfd } from '@ycsx/ofdjs';
+import { parseOfdDocument, renderOfd } from 'ofdts';
 
 const pages = ref([]);
 const loading = ref(false);

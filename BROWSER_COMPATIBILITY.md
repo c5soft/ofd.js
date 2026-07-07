@@ -91,10 +91,10 @@ import { parseOfdDocument, renderOfd } from 'ofd';
 
 1. **添加必需的Polyfills**:
 ```bash
-npm install --save-dev @babel/polyfill
-npm install --save-dev @babel/plugin-transform-promise
-npm install --save-dev promise-polyfill
-npm install --save-dev es6-promise
+bun add -d @babel/polyfill
+bun add -d @babel/plugin-transform-promise
+bun add -d promise-polyfill
+bun add -d es6-promise
 ```
 
 2. **配置Babel**:

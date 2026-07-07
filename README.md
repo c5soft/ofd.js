@@ -1,9 +1,9 @@
-# @ycsx/ofdjs
+# ofdts
 
 一个用于读取和渲染OFD（开放式文档格式）文件的JavaScript库。
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
-[![npm version](https://img.shields.io/npm/v/@ycsx/ofdjs?label=npm)](https://www.npmjs.com/package/@ycsx/ofdjs)
+[![npm version](https://img.shields.io/npm/v/ofdts?label=npm)](https://www.npmjs.com/package/ofdts)
 
 ## 功能特性
 
@@ -19,13 +19,15 @@
 使用npm安装：
 
 ```bash
-npm install @ycsx/ofdjs
+bun add ofdts
+# 或
+npm install ofdts
 ```
 
 或使用yarn：
 
 ```bash
-yarn add @ycsx/ofdjs
+yarn add ofdts
 ```
 
 ## 快速开始
@@ -33,7 +35,7 @@ yarn add @ycsx/ofdjs
 ### 基础使用
 
 ```javascript
-import { parseOfdDocument, renderOfd } from '@ycsx/ofdjs';
+import { parseOfdDocument, renderOfd } from 'ofdts';
 
 // 1. 解析OFD文件
 parseOfdDocument({
@@ -59,7 +61,7 @@ parseOfdDocument({
 ### 使用缩放功能
 
 ```javascript
-import { parseOfdDocument, renderOfdByScale, setPageScale, getPageScale } from '@ycsx/ofdjs';
+import { parseOfdDocument, renderOfdByScale, setPageScale, getPageScale } from 'ofdts';
 
 // 设置缩放比例（1.0 = 100%）
 setPageScale(1.2);
@@ -91,7 +93,7 @@ console.log('Current scale:', getPageScale());
 
 ```html
 <script type="module">
-  import { parseOfdDocument, renderPage, calPageBox } from '../index.js';
+  import { parseOfdDocument, renderPage, calPageBox } from '../index.ts';
 
   let currentDocument = null;
   let currentPageIndex = 0;
@@ -211,7 +213,7 @@ console.log('Current scale:', getPageScale());
 
 <script setup>
 import { ref } from 'vue';
-import { parseOfdDocument, renderOfd } from '@ycsx/ofdjs';
+import { parseOfdDocument, renderOfd } from 'ofdts';
 
 const loading = ref(false);
 const error = ref(null);
