@@ -1,26 +1,28 @@
+import { describe, it, expect, beforeAll } from "bun:test";
 import { parseOfdDocument, getPageScale, setPageScale } from '../index';
 
 describe('OFD Module Basic Tests', () => {
   describe('Page Scale Functions', () => {
-    beforeEach(() => {
+    beforeAll(() => {
       setPageScale(1.0);
     });
 
-    test('setPageScale should set scale value', () => {
+    it('should return default 1.0', () => {
+      expect(getPageScale()).toBe(1.0);
+    });
+
+    it('should set scale value', () => {
       setPageScale(1.5);
       expect(getPageScale()).toBe(1.5);
     });
 
-    test('getPageScale should return default 1.0', () => {
-      expect(getPageScale()).toBe(1.0);
-    });
 
-    test('getPageScale should handle decimal values', () => {
+    it('should handle decimal values', () => {
       setPageScale(0.75);
       expect(getPageScale()).toBe(0.75);
     });
 
-    test('getPageScale should accept multiple updates', () => {
+    it('should accept multiple updates', () => {
       setPageScale(0.8);
       expect(getPageScale()).toBe(0.8);
       setPageScale(1.2);
@@ -31,23 +33,8 @@ describe('OFD Module Basic Tests', () => {
   });
 
   describe('parseOfdDocument', () => {
-    test('parseOfdDocument should handle success callback', (done) => {
-      // const mockFile = new ArrayBuffer(10);
-      // const successCallback = jest.fn();
-      // const failCallback = jest.fn();
-
-      // Note: This test would require a valid OFD file or mock
-      // For now, this serves as a structure test
+    it('should be defined', () => {
       expect(parseOfdDocument).toBeDefined();
-      done();
-    });
-
-    test('parseOfdDocument should handle fail callback', (done) => {
-      // const failCallback = jest.fn();
-
-      // Note: This test would require proper error handling setup
-      expect(parseOfdDocument).toBeDefined();
-      done();
     });
   });
 });

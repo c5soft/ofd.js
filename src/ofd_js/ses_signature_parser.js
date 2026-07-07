@@ -19,9 +19,7 @@
  */
 
 
-import { Hex } from "@lapo/asn1js/hex";
-import { Base64 } from "@lapo/asn1js/base64";
-import { ASN1 } from "@lapo/asn1js";
+import { Hex, Base64, ASN1 } from "./asn1_util";
 import {SES_Signature_Verify} from "./verify_signature_util";
 import {digestByteArray} from "./verify_signature_util";
 let reHex = /^\s*(?:[0-9A-Fa-f][0-9A-Fa-f]\s*)+$/;
@@ -30,7 +28,7 @@ export const parseSesSignature = async function (zip, name) {
     return new Promise((resolve, reject) => {
         zip.files[name].async('base64').then(function (bytes) {
             let res = decodeText(bytes);
-            console.log("parseSesSignature decodeText:",res)
+            // console.log("parseSesSignature decodeText:",res)
             resolve(res);
         }, function error(e) {
             reject(e);
@@ -64,9 +62,14 @@ const decode = function (der, offset) {
     offset = offset || 0;
     try {
         const SES_Signature = decodeSES_Signature(der,offset);
-        const type = SES_Signature.toSign.eseal.esealInfo.picture.type;
-        const ofdArray = SES_Signature.toSign.eseal.esealInfo.picture.data.byte;
-        return {ofdArray, 'type': (type.str || type).toLowerCase(), SES_Signature,'verifyRet':SES_Signature_Verify(SES_Signature)};
+        if (SES_Signature.toSign && SES_Signature.toSign.eseal) {
+            // SES 格式：包含电子印章信息
+            const type = SES_Signature.toSign.eseal.esealInfo.picture.type;
+            const ofdArray = SES_Signature.toSign.eseal.esealInfo.picture.data.byte;
+            return {ofdArray, 'type': (type.str || type).toLowerCase(), SES_Signature,'verifyRet':SES_Signature_Verify(SES_Signature)};
+        }
+        // CMS 格式：不含 eseal，仅返回验证结果
+        return {ofdArray: null, 'type': null, SES_Signature, 'verifyRet': SES_Signature_Verify(SES_Signature)};
     } catch (e) {
         console.log("decode fail:",e)
         return {};
@@ -84,6 +87,18 @@ const decodeSES_Signature = function (der, offset) {
     offset = offset || 0;
     let asn1 = ASN1.decode(der, offset);
     var SES_Signature;
+
+    // 检测是否为 CMS ContentInfo 格式 (顶层 SEQUENCE 的第一个子元素是 OID)
+    if (asn1.sub && asn1.sub.length >= 2 &&
+        asn1.sub[0]?.typeName?.() === "OBJECT_IDENTIFIER" &&
+        asn1.sub[1]?.typeName?.() === "[0]") {
+        try {
+            return decodeCMS_Signature(asn1);
+        } catch (e) {
+            console.log("CMS decode failed:", e);
+        }
+    }
+
     try {
         //V1 V4分支判断
         //V1
@@ -230,6 +245,82 @@ const decodeSES_Signature = function (der, offset) {
     }
     return SES_Signature;
 }
+
+const decodeStandardCert = function (certAsn1) {
+    // 标准 X.509 Certificate SEQUENCE
+    try {
+        const tbsCert = certAsn1.sub[0]; // TBSCertificate
+        let subject = new Map();
+        if (tbsCert.sub && tbsCert.sub.length > 5) {
+            const asn1Subject = tbsCert.sub[5];
+            if (asn1Subject.sub) {
+                asn1Subject.sub.forEach(function (element) {
+                    try {
+                        const key = element.sub[0].sub[0].content().split('\n')[0];
+                        const value = element.sub[0].sub[1]?.stream.parseStringUTF(element.sub[0].sub[1].stream.pos + element.sub[0].sub[1].header, element.sub[0].sub[1].stream.pos + element.sub[0].sub[1].header + element.sub[0].sub[1].length);
+                        subject.set(key, value);
+                    } catch (e) { /* skip */ }
+                });
+            }
+        }
+        let publicKeyAlgorithm = '';
+        let publicKeyHex = '';
+        if (tbsCert.sub && tbsCert.sub.length > 6) {
+            const asn1PublicKeyInfo = tbsCert.sub[6];
+            if (asn1PublicKeyInfo.sub) {
+                publicKeyAlgorithm = asn1PublicKeyInfo.sub[0]?.stream.parseOID(asn1PublicKeyInfo.sub[0].stream.pos + asn1PublicKeyInfo.sub[0].header, asn1PublicKeyInfo.sub[0].stream.pos + asn1PublicKeyInfo.sub[0].header + asn1PublicKeyInfo.sub[0].length);
+                publicKeyHex = asn1PublicKeyInfo.sub[1]?.stream.hexDump(asn1PublicKeyInfo.sub[1].stream.pos + asn1PublicKeyInfo.sub[1].header, asn1PublicKeyInfo.sub[1].stream.pos + asn1PublicKeyInfo.sub[1].header + asn1PublicKeyInfo.sub[1].length);
+            }
+        }
+        return {
+            subject: subject,
+            'commonName': subject.get("2.5.4.3"),
+            'subjectPublicKeyInfo': {
+                'algorithm': publicKeyAlgorithm,
+                'subjectPublicKey': publicKeyHex,
+            },
+        };
+    } catch (e) {
+        console.log("decodeStandardCert fail:", e);
+        return {};
+    }
+};
+
+const decodeCMS_Signature = function (cmsAsn1) {
+    const signedData = cmsAsn1.sub[1].sub[0]; // [0] → SEQUENCE (SignedData)
+    const certificatesContainer = signedData.sub[3]; // [0] container
+    const signerInfos = signedData.sub[4]; // SET of SignerInfo
+    const signerInfo = signerInfos.sub[0]; // First SignerInfo
+
+    // 提取第一个证书
+    const cert = decodeStandardCert(certificatesContainer.sub[0]);
+
+    // SignerInfo: version, issuerAndSerialNum, digestAlg, signedAttrs[0], signatureAlg, signature
+    const signedAttrs = signerInfo.sub[3];
+    const signerSigAlg = signerInfo.sub[4];
+    const signerSignature = signerInfo.sub[5];
+
+    const toSignDer = signedAttrs.stream.enc.subarray(
+        signedAttrs.stream.pos,
+        signedAttrs.stream.pos + signedAttrs.header + signedAttrs.length);
+
+    const sigValue = signerSignature.stream.hexDump(
+        signerSignature.stream.pos + signerSignature.header,
+        signerSignature.stream.pos + signerSignature.header + signerSignature.length);
+
+    const sigAlgOID = signerSigAlg.sub[0]?.stream.parseOID(
+        signerSigAlg.sub[0].stream.pos + signerSigAlg.sub[0].header,
+        signerSigAlg.sub[0].stream.pos + signerSigAlg.sub[0].header + signerSigAlg.sub[0].length);
+
+    return {
+        'realVersion': 4,
+        'toSignDer': toSignDer,
+        'toSign': null,
+        'cert': cert,
+        'signatureAlgID': sigAlgOID,
+        'signature': sigValue,
+    };
+};
 
 const decodeCert = function (asn1, offset) {
     offset = offset || 0;

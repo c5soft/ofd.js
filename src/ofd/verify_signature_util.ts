@@ -13,11 +13,9 @@
  */
 
 import { sm2, sm3 } from "sm-crypto";
-import md5 from "js-md5";
-import sha1 from "js-sha1";
-import rsa from "jsrsasign";
+import { sha1, md5, rsaVerifySHA1 } from "./crypto_util";
 import { Uint8ArrayToHexString } from "./ofd_util";
-import { Base64 } from "@lapo/asn1js/base64";
+import { Base64 } from "./asn1_util";
 
 /**
  * 摘要计算并对比验证结果
@@ -44,9 +42,9 @@ export function digestByteArray(
     // sm-crypto sm3 accepts byte array input
     return hashedHex === sm3(Array.from(data));
   } else if (checkMethod.indexOf("md5") >= 0) {
-    return hashedHex === (md5 as any)(data);
+    return hashedHex === md5(data);
   } else if (checkMethod.indexOf("sha1") >= 0) {
-    return hashedHex === (sha1 as any)(data);
+    return hashedHex === sha1(data);
   } else {
     return "";
   }
@@ -69,7 +67,7 @@ export function SES_Signature_Verify(SES_Signature: any): boolean {
     signAlg = signAlg.toLowerCase();
     const msg = SES_Signature.toSignDer;
 
-    if (signAlg.indexOf("1.2.156.10197.1.501") >= 0 || signAlg.indexOf("sm2") >= 0) {
+    if (signAlg.indexOf("1.2.156.10197.1.501") >= 0 || signAlg.indexOf("1.2.156.10197.1.301") >= 0 || signAlg.indexOf("sm2") >= 0) {
       // SM2 签名验证（国密标准）
       let sigValueHex = SES_Signature.signature.replace(/ /g, '').replace(/\n/g, '');
       if (sigValueHex.indexOf('00') === 0) {
@@ -88,8 +86,7 @@ export function SES_Signature_Verify(SES_Signature: any): boolean {
         userId: "1234567812345678",
       });
     } else {
-      // RSA 签名验证
-      let sig = new (rsa as any).KJUR.crypto.Signature({ "alg": "SHA1withRSA" });
+      // RSA 签名验证（使用自实现 RSA PKCS#1 v1.5 + SHA1）
       const cert = SES_Signature.realVersion < 4
         ? SES_Signature.toSign.cert
         : SES_Signature.cert;
@@ -97,12 +94,14 @@ export function SES_Signature_Verify(SES_Signature: any): boolean {
       if (sigValueHex.indexOf('00') === 0) {
         sigValueHex = sigValueHex.substring(2, sigValueHex.length - 2);
       }
-      sig.init(cert);
-      sig.updateHex(msg);
-      return sig.verify(sigValueHex);
+      let publicKey = cert.subjectPublicKeyInfo.subjectPublicKey.replace(/ /g, '').replace(/\n/g, '');
+      if (publicKey.indexOf('00') === 0) {
+        publicKey = publicKey.substring(2, publicKey.length - 2);
+      }
+      return rsaVerifySHA1(Uint8ArrayToHexString(msg), sigValueHex, publicKey);
     }
   } catch (e) {
-    console.log(e);
+    console.log("SES_Signature_Verify fail:",e);
     return false;
   }
 }

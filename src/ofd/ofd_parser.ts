@@ -479,15 +479,17 @@ const getSignatureData = async function (zip: any, signature: string, signatureI
   const checkMethod = data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:References']['@_CheckMethod'];
   (globalThis as any).toBeChecked = new Map();
   let arr: Array<{ fileData: Uint8Array; hashed: string; checkMethod: string }> = [];
-  data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:References']['ofd:Reference'].forEach(async (reference: any) => {
-    if (Object.keys(reference).length == 0 || Object.keys(reference['@_FileRef']).length == 0) {
-      return true;
+  const references = data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:References']['ofd:Reference'];
+  const refArray: any[] = [].concat(references);
+  for (const reference of refArray) {
+    if (!reference || Object.keys(reference).length === 0 || !reference['@_FileRef'] || Object.keys(reference['@_FileRef']).length === 0) {
+      continue;
     }
     const hashed = reference['ofd:CheckValue'];
     const key = reference['@_FileRef'].replace('/', '');
-    let fileData = await getFileData(zip, key);
+    const fileData = await getFileData(zip, key);
     arr.push({ fileData, hashed, checkMethod });
-  });
+  }
   (globalThis as any).toBeChecked.set(signatureID, arr);
   return {
     'stampAnnot': data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:StampAnnot'],

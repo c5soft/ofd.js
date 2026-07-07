@@ -2,7 +2,7 @@
 
 一个用于读取和渲染OFD（开放式文档格式）文件的JavaScript库。
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
+[![License](<https://img.shields.io/badge/license-Apache%202.0-blue>)](LICENSE)
 [![npm version](https://img.shields.io/npm/v/ofdts?label=npm)](https://www.npmjs.com/package/ofdts)
 
 ## 功能特性
@@ -42,11 +42,11 @@ parseOfdDocument({
   ofd: 'path/to/file.ofd',  // 文件路径、File对象或ArrayBuffer
   success: (ofdDocument) => {
     console.log('解析成功', ofdDocument);
-    
+  
     // 2. 渲染文档到页面
     const screenWidth = window.innerWidth;
     const pages = renderOfd(screenWidth, ofdDocument[0]);
-    
+  
     // 3. 添加到DOM
     pages.forEach(pageDiv => {
       document.getElementById('container').appendChild(pageDiv);
@@ -280,12 +280,12 @@ const handleClear = () => {
 
 **参数：**
 
-| 参数 | 类型 | 描述 |
-|------|------|------|
-| `options` | Object | 配置对象 |
-| `options.ofd` | string \| File \| ArrayBuffer | OFD文件源（文件路径、File对象或二进制数据） |
-| `options.success` | Function | 成功回调，接收解析后的文档对象 |
-| `options.fail` | Function | 失败回调，接收错误对象 |
+| 参数                | 类型                         | 描述                                        |
+| ------------------- | ---------------------------- | ------------------------------------------- |
+| `options`         | Object                       | 配置对象                                    |
+| `options.ofd`     | string\| File \| ArrayBuffer | OFD文件源（文件路径、File对象或二进制数据） |
+| `options.success` | Function                     | 成功回调，接收解析后的文档对象              |
+| `options.fail`    | Function                     | 失败回调，接收错误对象                      |
 
 **返回值：** 无
 
@@ -311,10 +311,10 @@ parseOfdDocument({
 
 **参数：**
 
-| 参数 | 类型 | 描述 |
-|------|------|------|
-| `screenWidth` | number | 页面显示宽度（像素） |
-| `ofdDocument` | Object | 通过 `parseOfdDocument` 获得的文档对象 |
+| 参数            | 类型   | 描述                                    |
+| --------------- | ------ | --------------------------------------- |
+| `screenWidth` | number | 页面显示宽度（像素）                    |
+| `ofdDocument` | Object | 通过`parseOfdDocument` 获得的文档对象 |
 
 **返回值：** Array&lt;HTMLDivElement&gt; - 页面DOM元素数组
 
@@ -337,9 +337,9 @@ pages.forEach(pageDiv => {
 
 **参数：**
 
-| 参数 | 类型 | 描述 |
-|------|------|------|
-| `ofdDocument` | Object | 通过 `parseOfdDocument` 获得的文档对象 |
+| 参数            | 类型   | 描述                                    |
+| --------------- | ------ | --------------------------------------- |
+| `ofdDocument` | Object | 通过`parseOfdDocument` 获得的文档对象 |
 
 **返回值：** Array&lt;HTMLDivElement&gt; - 页面DOM元素数组
 
@@ -358,8 +358,8 @@ const pages = renderOfdByScale(ofdDocument);
 
 **参数：**
 
-| 参数 | 类型 | 描述 |
-|------|------|------|
+| 参数      | 类型   | 描述                                          |
+| --------- | ------ | --------------------------------------------- |
 | `scale` | number | 缩放比例（1.0 = 100%，可设置0.5-2.0之间的值） |
 
 **返回值：** 无
@@ -396,11 +396,11 @@ console.log(`当前缩放: ${currentScale * 100}%`);
 
 **参数：**
 
-| 参数 | 类型 | 描述 |
-|------|------|------|
+| 参数            | 类型   | 描述             |
+| --------------- | ------ | ---------------- |
 | `screenWidth` | number | 屏幕宽度（像素） |
-| `document` | Object | OFD文档对象 |
-| `page` | Object | 页面对象 |
+| `document`    | Object | OFD文档对象      |
+| `page`        | Object | 页面对象         |
 
 **返回值：** Object - 包含 `w`（宽度）和 `h`（高度）的对象
 
@@ -419,10 +419,10 @@ console.log(`页面尺寸: ${box.w}x${box.h}`);
 
 **参数：**
 
-| 参数 | 类型 | 描述 |
-|------|------|------|
+| 参数         | 类型   | 描述        |
+| ------------ | ------ | ----------- |
 | `document` | Object | OFD文档对象 |
-| `page` | Object | 页面对象 |
+| `page`     | Object | 页面对象    |
 
 **返回值：** Object - 包含 `w`（宽度）和 `h`（高度）的对象
 
@@ -442,14 +442,14 @@ console.log(`缩放后页面尺寸: ${box.w}x${box.h}`);
 
 **参数：**
 
-| 参数 | 类型 | 描述 |
-|------|------|------|
-| `pageDiv` | HTMLDivElement | 页面容器DOM元素 |
-| `page` | Object | 页面对象 |
-| `templates` | Object | 页面模板资源 |
-| `fonts` | Object | 字体资源 |
-| `drawParams` | Object | 绘制参数 |
-| `multiMedia` | Object | 多媒体资源 |
+| 参数           | 类型           | 描述            |
+| -------------- | -------------- | --------------- |
+| `pageDiv`    | HTMLDivElement | 页面容器DOM元素 |
+| `page`       | Object         | 页面对象        |
+| `templates`  | Object         | 页面模板资源    |
+| `fonts`      | Object         | 字体资源        |
+| `drawParams` | Object         | 绘制参数        |
+| `multiMedia` | Object         | 多媒体资源      |
 
 **返回值：** 无
 
@@ -483,13 +483,13 @@ parseOfdDocument({
 
 ## 浏览器兼容性
 
-| 浏览器 | 最低版本 | 备注 |
-|--------|---------|------|
-| Chrome | 50+ | ✅ 完全支持 |
-| Firefox | 45+ | ✅ 完全支持 |
-| Safari | 10+ | ✅ 完全支持 |
-| Edge | 15+ | ✅ 完全支持 |
-| IE | 不支持 | ❌ 需要使用polyfills |
+| 浏览器  | 最低版本 | 备注                 |
+| ------- | -------- | -------------------- |
+| Chrome  | 50+      | ✅ 完全支持          |
+| Firefox | 45+      | ✅ 完全支持          |
+| Safari  | 10+      | ✅ 完全支持          |
+| Edge    | 15+      | ✅ 完全支持          |
+| IE      | 不支持   | ❌ 需要使用polyfills |
 
 **注：** 需要支持 ES6 Module 和 Promise。如需支持IE11，请使用相应的polyfills。
 

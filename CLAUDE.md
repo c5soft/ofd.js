@@ -34,17 +34,17 @@ if (typeof window !== 'undefined' && typeof global === 'undefined') {
 }
 ```
 
-这是 `ofd-xml-parser` 运行所必需的（它依赖 `global.xmlParseFlag`），构建后的 ESM/IIFE 产物会自动包含此项。
+这是浏览器兼容性 polyfill，确保依赖 `global` 对象的库在浏览器中正常工作，构建后的 ESM/IIFE 产物会自动包含此项。
 
 ### 公开 API
 
-| API | 说明 |
-| --- | --- |
-| `parseOfdDocument(options)` | 解析 OFD 文档，支持 URL/File/ArrayBuffer 输入 |
-| `renderOfd(screenWidth, ofd)` | 按指定屏幕宽度（像素）渲染所有页面 |
-| `renderOfdByScale(ofd)` | 使用预配置的全局缩放渲染所有页面 |
-| `setPageScale(scale)` | 设置全局页面缩放倍数 |
-| `getPageScale()` | 获取当前全局页面缩放倍数 |
+| API                             | 说明                                          |
+| ------------------------------- | --------------------------------------------- |
+| `parseOfdDocument(options)`   | 解析 OFD 文档，支持 URL/File/ArrayBuffer 输入 |
+| `renderOfd(screenWidth, ofd)` | 按指定屏幕宽度（像素）渲染所有页面            |
+| `renderOfdByScale(ofd)`       | 使用预配置的全局缩放渲染所有页面              |
+| `setPageScale(scale)`         | 设置全局页面缩放倍数                          |
+| `getPageScale()`              | 获取当前全局页面缩放倍数                      |
 
 ### 公开类型
 
@@ -133,17 +133,17 @@ dist/                       # 构建输出
 
 ## 主要依赖
 
-| 包 | 用途 |
-| --- | --- |
-| `jszip` | ZIP 解压（OFD 是 ZIP 容器） |
-| `fast-xml-parser` | XML→JSON 解析（OFD 文件内部是 XML） |
-| `@xmldom/xmldom` | XML 解析 |
-| `jsrsasign` | RSA 签名验证 + ASN.1 处理 |
-| `sm-crypto` | 国密 SM2/SM3 算法 |
-| `@lapo/asn1js` | ASN.1 编码/解码（SES 印章解析） |
-| `js-md5` / `js-sha1` | MD5/SHA1 哈希（签名摘要验证） |
-| `core-js` | 旧浏览器 polyfills |
-| `web-streams-polyfill` | ReadableStream 兼容 |
+| 包                       | 用途                                 |
+| ------------------------ | ------------------------------------ |
+| `jszip`                | ZIP 解压（OFD 是 ZIP 容器）          |
+| `fast-xml-parser`      | XML→JSON 解析（OFD 文件内部是 XML） |
+| `@xmldom/xmldom`       | XML 解析                             |
+| `jsrsasign`            | RSA 签名验证 + ASN.1 处理            |
+| `sm-crypto`            | 国密 SM2/SM3 算法                    |
+| `@lapo/asn1js`         | ASN.1 编码/解码（SES 印章解析）      |
+| `js-md5` / `js-sha1` | MD5/SHA1 哈希（签名摘要验证）        |
+| `core-js`              | 旧浏览器 polyfills                   |
+| `web-streams-polyfill` | ReadableStream 兼容                  |
 
 ## 注意事项
 
@@ -170,93 +170,93 @@ dist/                       # 构建输出
 
 ### 文件结构 (第 6 章)
 
-| 标准要求 | 实现位置 | 状态 |
-| --------- | --------- | ------ |
-| ZIP 容器 6.2.0 | `ofd_parser.ts` → `unzipOfd()` 使用 JSZip | ✅ |
-| 目录布局: OFD.xml / Doc_N / Page_N 等 | `ofd_parser.ts` → `getDocRoots()` 等 | ✅ |
-| 多文档支持 (多个 DocBody) | `ofd_parser.ts` → `parseSingleDoc()` 循环处理 | ✅ |
+| 标准要求                              | 实现位置                                           | 状态 |
+| ------------------------------------- | -------------------------------------------------- | ---- |
+| ZIP 容器 6.2.0                        | `ofd_parser.ts` → `unzipOfd()` 使用 JSZip     | ✅   |
+| 目录布局: OFD.xml / Doc_N / Page_N 等 | `ofd_parser.ts` → `getDocRoots()` 等          | ✅   |
+| 多文档支持 (多个 DocBody)             | `ofd_parser.ts` → `parseSingleDoc()` 循环处理 | ✅   |
 
 ### 基本结构 (第 7 章)
 
-| 标准要求 | 实现位置 | 状态 |
-| --------- | --------- | ------ |
-| 命名空间 `ofd:` 解析 | `ofd-xml-parser` 外部库处理 | ✅ |
-| ST_Loc 路径解析 | `ofd_util.ts` → 路径拼接 | ✅ |
-| ST_Box / ST_Pos 解析 | `ofd_util.ts` → `converterDPI()` / `boxToPixel()` | ✅ |
-| Document.xml 根节点 | `ofd_parser.ts` → `doGetDocRoot()` | ✅ |
-| 页树 (PageTree) | `ofd_parser.ts` → `getDocument()` | ✅ |
-| 模板页 (TemplatePage) | `ofd_parser.ts` → `getTemplatePage()` | ✅ |
-| 资源 (Res) 加载 | `ofd_parser.ts` → `getDocumentRes()` / `getPublicRes()` | ✅ |
-| 公共资源 vs 页面资源 | 分别通过 DocumentRes.xml 和 Page_N/Res.xml 加载 | ✅ |
+| 标准要求              | 实现位置                                                       | 状态 |
+| --------------------- | -------------------------------------------------------------- | ---- |
+| 命名空间`ofd:` 解析 | `ofd-xml-parser` 外部库处理                                  | ✅   |
+| ST_Loc 路径解析       | `ofd_util.ts` → 路径拼接                                    | ✅   |
+| ST_Box / ST_Pos 解析  | `ofd_util.ts` → `converterDPI()` / `boxToPixel()`       | ✅   |
+| Document.xml 根节点   | `ofd_parser.ts` → `doGetDocRoot()`                        | ✅   |
+| 页树 (PageTree)       | `ofd_parser.ts` → `getDocument()`                         | ✅   |
+| 模板页 (TemplatePage) | `ofd_parser.ts` → `getTemplatePage()`                     | ✅   |
+| 资源 (Res) 加载       | `ofd_parser.ts` → `getDocumentRes()` / `getPublicRes()` | ✅   |
+| 公共资源 vs 页面资源  | 分别通过 DocumentRes.xml 和 Page_N/Res.xml 加载                | ✅   |
 
 ### 页面描述 — 坐标系统 (8.1)
 
-| 标准要求 | 实现位置 | 状态 |
-| --------- | --------- | ------ |
-| 页面空间: 左上角原点, X→右, Y→下, 毫米单位 | `ofd_util.ts` → `converterDPI()` | ✅ |
-| 变换矩阵 [a b c d e f] (8.1.5) | `ofd_render.ts` → Canvas CTM 设置 | ✅ |
-| 矩阵变换: 平移/缩放/旋转/切变 (表 20) | Canvas API `setTransform()` | ✅ |
-| 对象空间: 外接矩形 Boundary 定位 | `ofd_render.ts` → `renderPathObjectsOnCanvas()` | ✅ |
-| 设备空间转换: mm → 像素 | `ofd_util.ts` → `converterDPI()` | ✅ |
+| 标准要求                                     | 实现位置                                             | 状态 |
+| -------------------------------------------- | ---------------------------------------------------- | ---- |
+| 页面空间: 左上角原点, X→右, Y→下, 毫米单位 | `ofd_util.ts` → `converterDPI()`                | ✅   |
+| 变换矩阵 [a b c d e f] (8.1.5)               | `ofd_render.ts` → Canvas CTM 设置                 | ✅   |
+| 矩阵变换: 平移/缩放/旋转/切变 (表 20)        | Canvas API`setTransform()`                         | ✅   |
+| 对象空间: 外接矩形 Boundary 定位             | `ofd_render.ts` → `renderPathObjectsOnCanvas()` | ✅   |
+| 设备空间转换: mm → 像素                     | `ofd_util.ts` → `converterDPI()`                | ✅   |
 
 ### 绘制参数 (8.2)
 
-| 标准要求 | 实现位置 | 状态 |
-| --------- | --------- | ------ |
-| 线宽 (LineWidth) | Canvas `lineWidth` | ✅ |
-| 端点样式 (Cap) | Canvas `lineCap` | ✅ |
-| 连接样式 (Join) | Canvas `lineJoin` | ✅ |
-| 虚线样式 (Dash) | Canvas `setLineDash` | ✅ |
+| 标准要求         | 实现位置              | 状态 |
+| ---------------- | --------------------- | ---- |
+| 线宽 (LineWidth) | Canvas`lineWidth`   | ✅   |
+| 端点样式 (Cap)   | Canvas`lineCap`     | ✅   |
+| 连接样式 (Join)  | Canvas`lineJoin`    | ✅   |
+| 虚线样式 (Dash)  | Canvas`setLineDash` | ✅   |
 
 ### 颜色 (8.3)
 
-| 标准要求 | 实现位置 | 状态 |
-| --------- | --------- | ------ |
-| RGB 颜色 | `ofd_util.ts` → `getColor()` 解析 `#RRGGBB` | ✅ |
-| CMYK→RGB 转换 | `ofd_util.ts` → `cmykToRgb()` | ✅ |
-| Gray 灰度 | `ofd_util.ts` → `getColor()` | ✅ |
-| 调色板 (Palette) | 未实现 (通过索引取色) | ⚠️ |
-| 底纹 (Pattern) | 未实现 | ❌ |
-| 渐变 (Axial/Radial/Gouraud) | 未实现 | ❌ |
+| 标准要求                    | 实现位置                                           | 状态 |
+| --------------------------- | -------------------------------------------------- | ---- |
+| RGB 颜色                    | `ofd_util.ts` → `getColor()` 解析 `#RRGGBB` | ✅   |
+| CMYK→RGB 转换              | `ofd_util.ts` → `cmykToRgb()`                 | ✅   |
+| Gray 灰度                   | `ofd_util.ts` → `getColor()`                  | ✅   |
+| 调色板 (Palette)            | 未实现 (通过索引取色)                              | ⚠️ |
+| 底纹 (Pattern)              | 未实现                                             | ❌   |
+| 渐变 (Axial/Radial/Gouraud) | 未实现                                             | ❌   |
 
 ### 图形 (第 9 章)
 
-| 标准要求 | 实现位置 | 状态 |
-| --------- | --------- | ------ |
-| 路径对象 (PathObject) | `ofd_render.ts` → `renderPathObjectsOnCanvas()` | ✅ |
-| 缩写路径数据 (AbbreviatedData) | `ofd_render.ts` → `renderAbbreviatedData()` | ✅ |
-| 填充规则 (非零/奇偶) | Canvas `fillRule` | ✅ |
-| M/L/C 路径命令 | `ofd_render.ts` 解析 | ✅ |
-| **圆弧 (Arc) 命令** (9.3.5) | 未实现 — 会抛出未支持错误 | ⚠️ |
-| 裁剪区 (Clip) | `ofd_render.ts` → Canvas clip | ✅ |
+| 标准要求                          | 实现位置                                             | 状态 |
+| --------------------------------- | ---------------------------------------------------- | ---- |
+| 路径对象 (PathObject)             | `ofd_render.ts` → `renderPathObjectsOnCanvas()` | ✅   |
+| 缩写路径数据 (AbbreviatedData)    | `ofd_render.ts` → `renderAbbreviatedData()`     | ✅   |
+| 填充规则 (非零/奇偶)              | Canvas`fillRule`                                   | ✅   |
+| M/L/C 路径命令                    | `ofd_render.ts` 解析                               | ✅   |
+| **圆弧 (Arc) 命令** (9.3.5) | 未实现 — 会抛出未支持错误                           | ⚠️ |
+| 裁剪区 (Clip)                     | `ofd_render.ts` → Canvas clip                     | ✅   |
 
 ### 图像 (第 10 章)
 
-| 标准要求 | 实现位置 | 状态 |
-| --------- | --------- | ------ |
-| JPEG/PNG/TIFF/BMP 图像 | `ofd_render.ts` → `renderImageObject()` 用 `<img>` | ✅ |
-| JBIG2 压缩图像 | `jbig2/jbig2.ts` → 完整解码器 | ✅ |
-| 图像变换矩阵 | Canvas CTM | ✅ |
+| 标准要求               | 实现位置                                                  | 状态 |
+| ---------------------- | --------------------------------------------------------- | ---- |
+| JPEG/PNG/TIFF/BMP 图像 | `ofd_render.ts` → `renderImageObject()` 用 `<img>` | ✅   |
+| JBIG2 压缩图像         | `jbig2/jbig2.ts` → 完整解码器                          | ✅   |
+| 图像变换矩阵           | Canvas CTM                                                | ✅   |
 
 ### 文字 (第 11 章)
 
-| 标准要求 | 实现位置 | 状态 |
-| --------- | --------- | ------ |
-| 文字对象 (TextObject) | `ofd_render.ts` → SVG `<text>` 渲染 | ✅ |
-| 字体加载 (Font) | `ofd_render.ts` → CSS @font-face / system font fallback | ✅ |
-| 文字定位 (TextPosition) | SVG 坐标映射 | ✅ |
-| 字形变换 (11.4) | SVG 基本支持 | ⚠️ |
+| 标准要求                | 实现位置                                                   | 状态 |
+| ----------------------- | ---------------------------------------------------------- | ---- |
+| 文字对象 (TextObject)   | `ofd_render.ts` → SVG `<text>` 渲染                   | ✅   |
+| 字体加载 (Font)         | `ofd_render.ts` → CSS @font-face / system font fallback | ✅   |
+| 文字定位 (TextPosition) | SVG 坐标映射                                               | ✅   |
+| 字形变换 (11.4)         | SVG 基本支持                                               | ⚠️ |
 
 ### 数字签名 (第 18 章)
 
-| 标准要求 | 实现位置 | 状态 |
-| --------- | --------- | ------ |
-| 签名列表 (Signatures.xml) | `ses_signature_parser.ts` → 解析 | ✅ |
-| 签名文件结构 (18.2) | `ses_signature_parser.ts` | ✅ |
-| 文件摘要 (18.2.1) | `verify_signature_util.ts` → SM3/MD5/SHA1 | ✅ |
-| 签名验证 (SM2/RSA) | `verify_signature_util.ts` + sm-crypto / jsrsasign | ✅ |
-| SES 电子印章 | `ses_signature_parser.ts` → ASN.1 解析 | ✅ |
-| 签名外观 (SignedInfo) | `ses_signature_parser.ts` → 印章图片提取 | ✅ |
+| 标准要求                  | 实现位置                                             | 状态 |
+| ------------------------- | ---------------------------------------------------- | ---- |
+| 签名列表 (Signatures.xml) | `ses_signature_parser.ts` → 解析                  | ✅   |
+| 签名文件结构 (18.2)       | `ses_signature_parser.ts`                          | ✅   |
+| 文件摘要 (18.2.1)         | `verify_signature_util.ts` → SM3/MD5/SHA1         | ✅   |
+| 签名验证 (SM2/RSA)        | `verify_signature_util.ts` + sm-crypto / jsrsasign | ✅   |
+| SES 电子印章              | `ses_signature_parser.ts` → ASN.1 解析            | ✅   |
+| 签名外观 (SignedInfo)     | `ses_signature_parser.ts` → 印章图片提取          | ✅   |
 
 ### 未实现的特性
 

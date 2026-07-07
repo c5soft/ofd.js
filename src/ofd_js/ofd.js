@@ -32,12 +32,11 @@ import { getPageScal, setPageScal } from "./ofd_util";
 
 export function parseOfdDocument(options) {
     function doParseOFD(options) {
-        global.xmlParseFlag = 0;
         parseOfdSteps(options.ofd)
             .then(data => { if (options.success) options.success(data); })
             .catch(err => { console.log(err); if (options.fail) options.fail(err); });
     }
-    console.log('parseOfdDocument options=', options);
+    //console.log('parseOfdDocument options=', options);
     if (options.ofd instanceof File || options.ofd instanceof ArrayBuffer) {
         doParseOFD(options);
     } else {

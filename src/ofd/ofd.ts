@@ -120,7 +120,6 @@ type DoParseOptions = ParseOptions<File | ArrayBuffer>;
  */
 export function parseOfdDocument(options: ParseOptions): void {
   function doParseOFD(opts: DoParseOptions): void {
-    (globalThis as any).xmlParseFlag = 0;
     parseOfdSteps(opts.ofd)
       .then(data => { if (opts.success) opts.success(data); })
       .catch(err => { console.log(err); if (opts.fail) opts.fail(err); });

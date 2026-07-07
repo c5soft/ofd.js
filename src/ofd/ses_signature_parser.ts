@@ -12,9 +12,7 @@
  * 支持 SES V1 和 SES V4 两种版本格式。
  */
 
-import { Hex } from "@lapo/asn1js/hex";
-import { Base64 } from "@lapo/asn1js/base64";
-import { ASN1 } from "@lapo/asn1js";
+import { Hex, Base64, ASN1 } from "./asn1_util";
 import { SES_Signature_Verify, digestByteArray } from "./verify_signature_util";
 
 let reHex = /^\s*(?:[0-9A-Fa-f][0-9A-Fa-f]\s*)+$/;
@@ -76,11 +74,21 @@ function decode(der: Uint8Array, offset?: number): any {
   offset = offset || 0;
   try {
     const SES_Signature = decodeSES_Signature(der, offset);
-    const type = SES_Signature.toSign.eseal.esealInfo.picture.type;
-    const ofdArray = SES_Signature.toSign.eseal.esealInfo.picture.data.byte;
+    if (SES_Signature.toSign && SES_Signature.toSign.eseal) {
+      // SES 格式：包含电子印章信息
+      const type = SES_Signature.toSign.eseal.esealInfo.picture.type;
+      const ofdArray = SES_Signature.toSign.eseal.esealInfo.picture.data.byte;
+      return {
+        ofdArray,
+        'type': (type.str || type).toLowerCase(),
+        SES_Signature,
+        'verifyRet': SES_Signature_Verify(SES_Signature),
+      };
+    }
+    // CMS 格式：不含 eseal，仅返回验证结果
     return {
-      ofdArray,
-      'type': (type.str || type).toLowerCase(),
+      ofdArray: null,
+      'type': null,
       SES_Signature,
       'verifyRet': SES_Signature_Verify(SES_Signature),
     };
@@ -103,7 +111,7 @@ function decodeUTCTime(str: string): string {
 }
 
 /**
- * 解码 SES 签名 ASN.1 结构，支持 V1 和 V4 两种版本
+ * 解码 SES 签名 ASN.1 结构，支持 V1、V4 和 CMS ContentInfo 三种格式
  *
  * SES V1 结构（早期版本）：
  *   SEQUENCE {
@@ -120,6 +128,20 @@ function decodeUTCTime(str: string): string {
  *     timeStamp UTCTime
  *   }
  *
+ * CMS ContentInfo 格式 (GM/T 0006)：
+ *   SEQUENCE {
+ *     contentType OID,       -- 1.2.156.10197.6.1.4.2.2 (signedData)
+ *     [0] {
+ *       SEQUENCE {           -- SignedData
+ *         version INTEGER,
+ *         digestAlgorithms SET,
+ *         encapContentInfo SEQUENCE,
+ *         certificates [0] IMPLICIT,
+ *         signerInfos SET
+ *       }
+ *     }
+ *   }
+ *
  * @param der - DER 编码数据
  * @param offset - 偏移量
  * @returns SES 签名对象
@@ -128,6 +150,18 @@ function decodeSES_Signature(der: Uint8Array, offset?: number): any {
   offset = offset || 0;
   let asn1 = ASN1.decode(der, offset);
   var SES_Signature: any;
+
+  // 检测是否为 CMS ContentInfo 格式 (顶层 SEQUENCE 的第一个子元素是 OID)
+  const asn1Any: any = asn1;
+  if (asn1Any.sub && asn1Any.sub.length >= 2 &&
+      asn1Any.sub[0]?.typeName?.() === "OBJECT_IDENTIFIER" &&
+      asn1Any.sub[1]?.typeName?.() === "[0]") {
+    try {
+      return decodeCMS_Signature(asn1Any);
+    } catch (e) {
+      console.log("CMS decode failed:", e);
+    }
+  }
 
   try {
     // V1 版本解析
@@ -256,7 +290,7 @@ function decodeSES_Signature(der: Uint8Array, offset?: number): any {
         asn1.sub[1].stream.pos + asn1.sub[1].header + asn1.sub[1].length, false),
     };
   } catch (_e) {
-    console.log(_e);
+    console.log("decodeSES_Signature V1 fail:",_e);
     try {
       // V4 版本解析
       const certListType = asn1.sub[0]?.sub[1]?.sub[0]?.sub[2]?.sub[2]?.stream.parseInteger(
@@ -366,9 +400,7 @@ function decodeSES_Signature(der: Uint8Array, offset?: number): any {
           'dataHash': asn1.sub[0]?.sub[3]?.stream.hexDump(
             asn1.sub[0].sub[3].stream.pos + asn1.sub[0].sub[3].header,
             asn1.sub[0].sub[3].stream.pos + asn1.sub[0].sub[3].header + asn1.sub[0].sub[3].length, false),
-          'propertyInfo': asn1.sub[0]?.sub[4]?.stream.parseStringUTF(
-            asn1.sub[0].sub[4].stream.pos + asn1.sub[0].sub[4].header,
-            asn1.sub[0].sub[4].stream.pos + asn1.sub[0].sub[4].header + asn1.sub[0].sub[4].length),
+          'propertyInfo': asn1.sub[0]?.sub[4] ? Uint8ArrayToString(asn1.sub[0].sub[4]) : '',
         },
         'cert': decodeCert(asn1.sub[1]),
         'signatureAlgID': asn1.sub[2]?.stream.parseOID(
@@ -387,6 +419,138 @@ function decodeSES_Signature(der: Uint8Array, offset?: number): any {
     }
   }
   return SES_Signature;
+}
+
+/**
+ * 解码 CMS ContentInfo (GM/T 0006) 格式的签名数据
+ *
+ * 实际 OFD 文件中的 SignedValue.dat 可能使用 CMS/PKCS#7 包装格式：
+ *
+ * ContentInfo SEQUENCE {
+ *   contentType OID,          -- 1.2.156.10197.6.1.4.2.2 (signedData)
+ *   [0] {
+ *     SignedData SEQUENCE {
+ *       version INTEGER,
+ *       digestAlgorithms SET { SM3 },
+ *       encapContentInfo SEQUENCE { eContentType OID },
+ *       certificates [0] { X.509 Certificate },
+ *       signerInfos SET {
+ *         SignerInfo SEQUENCE {
+ *           version,
+ *           issuerAndSerialNumber,
+ *           digestAlgorithm { SM3 },
+ *           signedAttrs [0] { ... },
+ *           signatureAlgorithm { SM2 },
+ *           signature OCTET_STRING
+ *         }
+ *       }
+ *     }
+ *   }
+ * }
+ *
+ * @param cmsAsn1 - 已解码的 CMS ContentInfo ASN.1 节点
+ * @returns SES 签名对象（不含 eseal 数据）
+ */
+function decodeCMS_Signature(cmsAsn1: any): any {
+  const signedData = cmsAsn1.sub[1].sub[0]; // [0] → SEQUENCE (SignedData)
+  // signedData structure:
+  // 0: version INTEGER
+  // 1: digestAlgorithms SET
+  // 2: encapContentInfo SEQUENCE
+  // 3: certificates [0] IMPLICIT (contains certificate SEQUENCE)
+  // 4: signerInfos SET
+  const certificatesContainer = signedData.sub[3]; // [0] container
+  const signerInfos = signedData.sub[4]; // SET of SignerInfo
+  const signerInfo = signerInfos.sub[0]; // First SignerInfo
+
+  // 提取第一个证书 (标准 X.509 Certificate SEQUENCE: [TBSCertificate, signatureAlgorithm, signatureValue])
+  const certAsn1 = certificatesContainer.sub[0];
+  // 解析证书信息（标准 X.509 结构）
+  const tbsCert = certAsn1.sub[0]; // TBSCertificate SEQUENCE
+  let subject = new Map();
+  if (tbsCert.sub && tbsCert.sub.length > 5) {
+    const asn1Subject = tbsCert.sub[5]; // subject (SEQUENCE of SET)
+    if (asn1Subject.sub) {
+      asn1Subject.sub.forEach((element: any) => {
+        try {
+          const key = element.sub[0].sub[0].content().split('\n')[0];
+          const value = element.sub[0].sub[1]?.stream.parseStringUTF(
+            element.sub[0].sub[1].stream.pos + element.sub[0].sub[1].header,
+            element.sub[0].sub[1].stream.pos + element.sub[0].sub[1].header + element.sub[0].sub[1].length);
+          subject.set(key, value);
+        } catch { /* skip invalid entry */ }
+      });
+    }
+  }
+  let publicKeyAlgorithm = '';
+  let publicKeyHex = '';
+  if (tbsCert.sub && tbsCert.sub.length > 6) {
+    const asn1PublicKeyInfo = tbsCert.sub[6];
+    if (asn1PublicKeyInfo.sub) {
+      publicKeyAlgorithm = asn1PublicKeyInfo.sub[0]?.stream.parseOID(
+        asn1PublicKeyInfo.sub[0].stream.pos + asn1PublicKeyInfo.sub[0].header,
+        asn1PublicKeyInfo.sub[0].stream.pos + asn1PublicKeyInfo.sub[0].header + asn1PublicKeyInfo.sub[0].length);
+      publicKeyHex = asn1PublicKeyInfo.sub[1]?.stream.hexDump(
+        asn1PublicKeyInfo.sub[1].stream.pos + asn1PublicKeyInfo.sub[1].header,
+        asn1PublicKeyInfo.sub[1].stream.pos + asn1PublicKeyInfo.sub[1].header + asn1PublicKeyInfo.sub[1].length);
+    }
+  }
+  const cert = {
+    subject,
+    'commonName': subject.get("2.5.4.3"),
+    'subjectPublicKeyInfo': {
+      'algorithm': publicKeyAlgorithm,
+      'subjectPublicKey': publicKeyHex,
+    },
+  };
+
+  // SignerInfo 结构:
+  // 0: version INTEGER
+  // 1: issuerAndSerialNumber
+  // 2: digestAlgorithm
+  // 3: signedAttrs [0] tagged SET of attributes (this is what's signed)
+  // 4: signatureAlgorithm
+  // 5: signature
+  const signedAttrs = signerInfo.sub[3]; // [0] tagged SET of signed attributes
+  const signerSigAlg = signerInfo.sub[4]; // SEQUENCE { OID, params }
+  const signerSignature = signerInfo.sub[5]; // OCTET STRING (signature value)
+
+  // toSignDer = signedAttrs 的完整 DER 编码（SM2 签名对象）
+  const toSignDer = signedAttrs.stream.enc.subarray(
+    signedAttrs.stream.pos,
+    signedAttrs.stream.pos + signedAttrs.header + signedAttrs.length);
+
+  // 签名值
+  const sigValue = signerSignature.stream.hexDump(
+    signerSignature.stream.pos + signerSignature.header,
+    signerSignature.stream.pos + signerSignature.header + signerSignature.length);
+
+  // 签名算法 OID
+  const sigAlgOID = signerSigAlg.sub[0]?.stream.parseOID(
+    signerSigAlg.sub[0].stream.pos + signerSigAlg.sub[0].header,
+    signerSigAlg.sub[0].stream.pos + signerSigAlg.sub[0].header + signerSigAlg.sub[0].length);
+
+  return {
+    'realVersion': 4,
+    'toSignDer': toSignDer,
+    'toSign': null, // CMS 格式不含 SES eseal 数据
+    'cert': cert,
+    'signatureAlgID': sigAlgOID,
+    'signature': sigValue,
+  };
+}
+
+/**
+ * Uint8Array 转字符串
+ * @param fileData - 字节数组
+ * @returns 字符串
+ */
+function Uint8ArrayToString(fileData: any): string {
+  let dataString = "";
+  for (let i = 0; i < fileData.length; i++) {
+    dataString += String.fromCharCode(fileData[i]);
+  }
+  return dataString;
 }
 
 /**
@@ -419,8 +583,8 @@ function decodeCert(asn1: any): any {
           asn1PublicKeyInfo.sub[1].stream.pos + asn1PublicKeyInfo.sub[1].header + asn1PublicKeyInfo.sub[1].length),
       },
     };
-  } catch (_e) {
-    console.log(_e);
+  } catch (e) {
+    console.log("decodeCert fail:",e);
     return {};
   }
 }

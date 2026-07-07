@@ -389,15 +389,17 @@ const getSignatureData = async function (zip, signature, signatureID) {
     const checkMethod = data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:References']['@_CheckMethod'];
     global.toBeChecked = new Map();
     let arr = new Array();
-    data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:References']['ofd:Reference'].forEach(async reference=>{
-        if(Object.keys(reference).length==0 || Object.keys(reference['@_FileRef']).length==0){
-            return true;
+    const references = data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:References']['ofd:Reference'];
+    const refArray = [].concat(references);
+    for (const reference of refArray) {
+        if (!reference || Object.keys(reference).length === 0 || !reference['@_FileRef'] || Object.keys(reference['@_FileRef']).length === 0) {
+            continue;
         }
         const hashed = reference['ofd:CheckValue'];
-        const key = reference['@_FileRef'].replace('/','');
-        let fileData = await getFileData(zip, key);
+        const key = reference['@_FileRef'].replace('/', '');
+        const fileData = await getFileData(zip, key);
         arr.push({fileData,hashed,checkMethod});
-    });
+    }
     global.toBeChecked.set(signatureID, arr);
     return {
         'stampAnnot': data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:StampAnnot'],

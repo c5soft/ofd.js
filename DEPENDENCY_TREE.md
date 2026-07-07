@@ -114,11 +114,7 @@ src/jbig2/
 ```text
 ofdts
 ├── 运行时依赖:
-│   ├── @lapo/asn1js (2.1.3) - ASN.1 解码（用于电子签名）
 │   ├── core-js (3.49.0) - 兼容性 polyfills
-│   ├── js-md5 (0.8.3) - MD5 哈希算法
-│   ├── js-sha1 (0.7.0) - SHA-1 哈希算法
-│   ├── jsrsasign (11.1.3) - RSA 签名验证
 │   ├── jszip (3.10.1) - ZIP 解压（OFD 是 ZIP 容器）
 │   ├── fast-xml-parser (4.5.7) - XML 转 JSON（OFD 文件内部使用 XML）
 │   ├── sm-crypto (0.4.0) - 国密 SM2/SM3 算法
