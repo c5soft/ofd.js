@@ -136,8 +136,9 @@ dist/                       # 构建输出
 | `jszip`                | ZIP 解压（OFD 是 ZIP 容器）          |
 | `fast-xml-parser`      | XML→JSON 解析（OFD 文件内部是 XML） |
 | `sm-crypto`            | 国密 SM2/SM3 算法                    |
-| `core-js`              | 旧浏览器 polyfills                   |
 | `web-streams-polyfill` | ReadableStream 兼容                  |
+
+> **Note:** 不再需要 `core-js` — 项目只支持现代浏览器（Chrome ≥ 50, Firefox ≥ 45, Safari ≥ 10, Edge ≥ 15），所有 ES2015+ 特性原生支持。
 
 > **Note:** `js-md5`, `js-sha1`, `jsrsasign`, `@lapo/asn1js` 这些外部依赖已移除。功能已在 `crypto_util.ts` 和 `asn1_util.ts` 中自实现，减少了总依赖体积。
 

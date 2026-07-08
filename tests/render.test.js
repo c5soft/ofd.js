@@ -1,6 +1,6 @@
 import { describe, it, expect } from "bun:test";
 import { JSDOM } from 'jsdom';
-import { renderOfd, renderOfdByScale } from '../index';
+import { renderOfd, renderOfdByScale } from '../src/index';
 
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
 global.document = dom.window.document;

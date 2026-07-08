@@ -52,7 +52,6 @@
     "pdf-alternative"
   ],
   "dependencies": {
-    "core-js": "3.49.0",
     "jszip": "3.10.1",
     "fast-xml-parser": "^5.9.3",
     "sm-crypto": "0.4.0",

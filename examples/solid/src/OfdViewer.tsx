@@ -1,7 +1,5 @@
 import { createSignal, createEffect, createResource } from 'solid-js';
-// import { parseOfdDocument, renderOfd } from 'ofdts';
-// import type { OFDDocument } from 'ofdts';
-import { parseOfdDocument, renderOfd } from '../../../index';
+import { parseOfdDocument, renderOfd } from '../../../src';
 // import { parseOfdDocument, renderOfd } from '../../../dist/ofd';
 
 interface OfdFile {
