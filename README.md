@@ -496,14 +496,12 @@ parseOfdDocument({
 ## 依赖项
 
 - **jszip** - ZIP文件解析
-- **@xmldom/xmldom** - XML解析
-- **jsrsasign** - 数字签名验证
-- **js-sha1** - SHA1哈希算法
-- **js-md5** - MD5哈希算法
-- **@lapo/asn1js** - ASN.1编码/解码
-- **ofd-xml-parser** - OFD XML解析
-- **@sharp9/ofdjs** - OFD格式处理
-- **web-streams-polyfill** - Stream API polyfill
+- **fast-xml-parser** - XML→JSON解析
+- **sm-crypto** - 国密 SM2/SM3 算法
+- **core-js** - 旧浏览器 polyfills
+- **web-streams-polyfill** - ReadableStream 兼容
+
+**Note:** 不再依赖外部 `js-md5`, `js-sha1`, `jsrsasign`, `@lapo/asn1js`。这些功能已在 `crypto_util.ts` 和 `asn1_util.ts` 中自实现。
 
 ## 常见问题
 

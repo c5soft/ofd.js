@@ -65,9 +65,10 @@ src/
 │   ├── ofd_parser.ts       # 解析流水线 (ZIP→XML→JSON→结构化文档)
 │   ├── ofd_render.ts       # 页面渲染 (Canvas 路径 + SVG 文本 + DOM 图像)
 │   ├── ofd_util.ts         # 几何计算、坐标转换、颜色解析、HTML 解码
+│   ├── asn1_util.ts        # 轻量级 ASN.1 DER 解码器（替代 @lapo/asn1js）
+│   ├── crypto_util.ts      # SHA1/MD5/RSA PKCS#1 v1.5 自实现（替代 js-md5/js-sha1/jsrsasign）
 │   ├── ses_signature_parser.ts  # SES 电子印章 ASN.1 解析
-│   ├── verify_signature_util.ts # SM2/RSA 签名验证 + SM3/MD5/SHA1 摘要 (SM3 from sm-crypto)
-│   └── lapo_asn1js.d.ts    # @lapo/asn1js 类型声明
+│   └── verify_signature_util.ts # SM2/RSA 签名验证 + SM3/MD5/SHA1 摘要 (SM3 from sm-crypto)
 └── jbig2/                  # JBIG2 图像解码 (TypeScript)
     ├── jbig2.ts            # 主解码器 (ISO/IEC 14492)
     ├── arithmetic_decoder.ts # QM coder 算术解码
@@ -80,8 +81,6 @@ src/
     ├── compatibility.ts    # 浏览器 polyfills (core-js)
     └── is_node.ts          # 环境检测
 
-ofd_js/                     # 原始 JavaScript 源代码 — TypeScript 迁移的参考基准
-jbig2_js/                   # 原始 JavaScript 源代码 — TypeScript 迁移的参考基准
 dist/                       # 构建输出
 ├── ofd.js                  # ESM 格式（未压缩）
 ├── ofd.min.js              # IIFE 格式（压缩，暴露 window.OFD）
@@ -137,23 +136,20 @@ dist/                       # 构建输出
 | ------------------------ | ------------------------------------ |
 | `jszip`                | ZIP 解压（OFD 是 ZIP 容器）          |
 | `fast-xml-parser`      | XML→JSON 解析（OFD 文件内部是 XML） |
-| `@xmldom/xmldom`       | XML 解析                             |
-| `jsrsasign`            | RSA 签名验证 + ASN.1 处理            |
 | `sm-crypto`            | 国密 SM2/SM3 算法                    |
-| `@lapo/asn1js`         | ASN.1 编码/解码（SES 印章解析）      |
-| `js-md5` / `js-sha1` | MD5/SHA1 哈希（签名摘要验证）        |
 | `core-js`              | 旧浏览器 polyfills                   |
 | `web-streams-polyfill` | ReadableStream 兼容                  |
+
+> **Note:** `js-md5`, `js-sha1`, `jsrsasign`, `@lapo/asn1js` 这些外部依赖已移除。功能已在 `crypto_util.ts` 和 `asn1_util.ts` 中自实现，减少了总依赖体积。
 
 ## 注意事项
 
 - **仅浏览器可用**: 依赖 DOM API（`document`、`canvas`、`Image`），不支持 Node.js。
 - **构建需要 Bun**: 脚本使用 `Bun.$` shell API；运行时用 `bun` 命令，非 Node.js。`node >= 14` 仅用于运行构建工具。
 - **TypeScript 严格模式关闭**: `tsconfig.json` 中 `strict: false` — 从 JS 迁移的代码使用了许多 `any` 类型。
-- **测试环境**: `tests/setup.js` 使用 `jsdom` 模拟浏览器 DOM。测试通过 Jest 兼容层运行（`jest.config.js` + `babel-jest`），同时也支持 `bun test`。
-- **原始 JS 源码**: `ofd_js/` 和 `jbig2_js/` 是 TypeScript 迁移的参考基准。任何逻辑变更应首先对比 JS 原版确保正确性。
-- **依赖树**: 见 [DEPENDENCY_TREE.md](DEPENDENCY_TREE.md) — 从叶子（`sm3.ts`、`ofd_util.ts`、`is_node.ts`）到根（`ofd.ts`）的单向无环依赖。
-- **测试**: `bun test` 运行 26 个测试（5 个文件）。Jest 配置保留用于兼容（`bun jest` 命令），但 `bun test` 是主力。
+- **测试环境**: 使用 `bun:test` 内置测试运行器，`jsdom` 模拟浏览器 DOM。完全移除了 Jest 依赖。
+- **依赖树**: 见 [DEPENDENCY_TREE.md](DEPENDENCY_TREE.md) — 从叶子到根（`ofd.ts`）的单向无环依赖。
+- **测试**: `bun test` 运行 32 个测试（6 个文件）。所有测试通过。
 - **ESLint**: 配置在 `eslint.config.js`，使用 `@typescript-eslint` 插件，规则较宽松（`no-console: off`, `no-var: off`）。
 - **browserslist**: Chrome > 50, Firefox > 45, Safari > 10, Edge > 15。
 
@@ -254,8 +250,8 @@ dist/                       # 构建输出
 | 签名列表 (Signatures.xml) | `ses_signature_parser.ts` → 解析                  | ✅   |
 | 签名文件结构 (18.2)       | `ses_signature_parser.ts`                          | ✅   |
 | 文件摘要 (18.2.1)         | `verify_signature_util.ts` → SM3/MD5/SHA1         | ✅   |
-| 签名验证 (SM2/RSA)        | `verify_signature_util.ts` + sm-crypto / jsrsasign | ✅   |
-| SES 电子印章              | `ses_signature_parser.ts` → ASN.1 解析            | ✅   |
+| 签名验证 (SM2/RSA)        | `verify_signature_util.ts` + sm-crypto / 自实现 RSA | ✅   |
+| SES 电子印章              | `ses_signature_parser.ts` → ASN.1 解析（自实现解码器） | ✅   |
 | 签名外观 (SignedInfo)     | `ses_signature_parser.ts` → 印章图片提取          | ✅   |
 
 ### 未实现的特性

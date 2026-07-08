@@ -2,7 +2,7 @@
 
 本文档记录了 ofdts 项目的完整源代码依赖关系。
 
-**生成日期**: 2026-07-07
+**生成日期**: 2026-07-08
 
 ## Mermaid 依赖图
 
@@ -22,17 +22,15 @@ flowchart LR
     D --> I[src/jbig2/jbig2.ts]
     D --> J[src/ofd/ses_signature_parser.ts]
 
-    J --> K["@lapo/asn1js/hex\n(外部npm)"]
-    J --> L["@lapo/asn1js/base64\n(外部npm)"]
-    J --> M["@lapo/asn1js\n(外部npm)"]
+    J --> K[src/ofd/asn1_util.ts]
     J --> N[src/ofd/verify_signature_util.ts]
 
     N --> O["sm-crypto\n(外部npm)"]
-    N --> Q["js-md5\n(外部npm)"]
-    N --> R["js-sha1\n(外部npm)"]
-    N --> S["jsrsasign\n(外部npm)"]
+    N --> P[src/ofd/crypto_util.ts]
     N --> E
-    N --> L
+    N --> K
+
+    P --> E
 
     I --> T[src/jbig2/util.ts]
     I --> U[src/jbig2/core_utils.ts]
@@ -58,8 +56,8 @@ flowchart LR
     %% 样式分组
     classDef internal fill:#dfffdf,stroke:#333,stroke-width:1px;
     classDef external fill:#ffe0e0,stroke:#333,stroke-width:1px;
-    class A,B,C,D,E,I,J,N,T,U,V,W,X,Y,Z,AA,AB internal;
-    class G,H,K,L,M,O,Q,R,S external;
+    class A,B,C,D,E,I,J,K,N,P,T,U,V,W,X,Y,Z,AA,AB internal;
+    class G,H,O external;
 ```
 
 ## 分层依赖结构
@@ -82,9 +80,10 @@ src/ofd/
 │   │   ├── ofd_util.ts
 │   │   ├── jbig2/jbig2.ts (JBIG2图像解码)
 │   │   └── ses_signature_parser.ts (电子签名解析)
-│   │       ├── verify_signature_util.ts (签名验证)
-│   │       │   └── ofd_util.ts (sm3 from sm-crypto)
-│   │       └── (外部ASN1库)
+│   │       ├── asn1_util.ts (自实现 ASN.1 DER 解码)
+│   │       └── verify_signature_util.ts (签名验证)
+│   │           ├── crypto_util.ts (自实现 SHA1/MD5/RSA)
+│   │           └── ofd_util.ts (sm3 from sm-crypto)
 │   └── ofd_util.ts (公共工具)
 ```
 
@@ -116,7 +115,7 @@ ofdts
 ├── 运行时依赖:
 │   ├── core-js (3.49.0) - 兼容性 polyfills
 │   ├── jszip (3.10.1) - ZIP 解压（OFD 是 ZIP 容器）
-│   ├── fast-xml-parser (4.5.7) - XML 转 JSON（OFD 文件内部使用 XML）
+│   ├── fast-xml-parser (5.9.3) - XML 转 JSON（OFD 文件内部使用 XML）
 │   ├── sm-crypto (0.4.0) - 国密 SM2/SM3 算法
 │   └── web-streams-polyfill (4.3.0) - 流 polyfill
 │
@@ -125,7 +124,6 @@ ofdts
     ├── @types/bun
     ├── @typescript-eslint/*
     ├── eslint
-    ├── jest
     ├── jsdom
     ├── prettier
     └── vite
@@ -140,7 +138,9 @@ ofdts
 | `ofd_parser.ts`                 | 解析流水线：解压 → 获取文档根 → 解析文档 → 资源 → 模板页 → 内容页             |
 | `ofd_render.ts`                 | 页面渲染：Canvas 渲染路径，SVG 渲染文本，DOM 渲染图像                          |
 | `ofd_util.ts`                   | 坐标转换、颜色解析、路径处理、HTML 解码等工具                                  |
-| `ses_signature_parser.ts`       | SES 电子签名 ASN.1 解码（支持 V1/V4）                                          |
+| `asn1_util.ts`                  | 轻量级 ASN.1 DER 解码器（替代 `@lapo/asn1js`），支持 OID/INTEGER/OCTET STRING 等 |
+| `crypto_util.ts`                | SHA1/MD5/RSA PKCS#1 v1.5 自实现（替代 `js-md5`/`js-sha1`/`jsrsasign`）         |
+| `ses_signature_parser.ts`       | SES 电子签名 ASN.1 解码（支持 V1/V4，支持 CMS ContentInfo 格式）               |
 | `verify_signature_util.ts`      | SM2/RSA 签名验证，SM3/MD5/SHA1 摘要验证（SM3 来自 `sm-crypto`）                 |
 | `jbig2/jbig2.ts`                | JBIG2 二值图像压缩解码（用于印章图片）                                         |
 | `jbig2/arithmetic_decoder.ts`   | QM Coder 算术解码（JBIG2 核心）                                                |
@@ -153,9 +153,9 @@ ofdts
 
 ## 统计信息
 
-- **总 TypeScript 源文件数**: 20
-  - src/ofd/: 8 个
+- **总 TypeScript 源文件数**: 22
+  - src/ofd/: 10 个 (新增: `asn1_util.ts`, `crypto_util.ts`)
   - src/jbig2/: 11 个
   - index.ts: 1 个
-- **层级深度**: 最多 5 层嵌套
-- **外部依赖数**: 9 个运行时依赖
+- **层级深度**: 最多 6 层嵌套
+- **外部依赖数**: 5 个运行时依赖 (之前的外部依赖 `js-md5`/`js-sha1`/`jsrsasign`/`@lapo/asn1js` 已移除，改为自实现)

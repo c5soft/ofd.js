@@ -13,17 +13,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - .npmignore文件
 - CHANGELOG.md版本管理文档
 - ESLint和Prettier配置
-- Jest单元测试框架
-- 使用示例代码
+- **`bun:test` 原生测试框架** - 完全移除 Jest 依赖
 - GitHub Actions CI/CD流程
 - CONTRIBUTING.md贡献指南
+- **自实现 ASN.1 DER 解码器** (`src/ofd/asn1_util.ts`) - 替代 `@lapo/asn1js`
+- **自实现 SHA1/MD5/RSA PKCS#1 v1.5** (`src/ofd/crypto_util.ts`) - 替代 `js-md5`/`js-sha1`/`jsrsasign`
 
 ### Changed
-- 改进README.md文档（原仅包含标题）
-- 升级package.json中的依赖版本
+- **完全迁移到 TypeScript** - 已删除所有原始 JavaScript 目录 (`ofd_js/`, `jbig2_js/`)
+- **改进 README.md 文档** - 更新依赖列表，移除已删除的外部依赖
+- **升级 package.json 中的依赖版本**
+- **修复 SES 签名解析** - 增加 CMS ContentInfo 格式支持（建设银行电子签章格式）
+- **修复 OID 识别** - 识别 SM2 OID `1.2.156.10197.1.301.*`
+- 改进CLAUDE.md文档（更新目录结构和依赖）
+
+### Removed
+- **移除所有 Jest 依赖** - 测试全部迁移到 `bun:test`
+- **移除四个外部依赖**: `@lapo/asn1js`, `js-md5`, `js-sha1`, `jsrsasign`
+- **删除原始 JavaScript 目录**: `ofd_js/` 和 `jbig2_js/` (迁移完成，不再需要参考)
+- 删除 `tests/setup.js` 和 `jest.config.js`
 
 ### Fixed
 - LICENSE文件完整性（原为空）
+- 修复 `forEach(async)` bug in `ofd_parser.ts` (`getSignatureData`) - 之前会导致签名数组为空
 
 ## [1.0.0] - 2026-06-25
 
