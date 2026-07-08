@@ -27,7 +27,7 @@
     "test": "bun test",
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
-    "format": "prettier --write \"src/**/*.js\" \"src/**/*.ts\" \"index.ts\"",
+    "format": "prettier --write \"src/**/*.ts\" \"index.ts\"",
     "build": "bun run scripts/build_dist.ts --minify",
     "build:dev": "bun run scripts/build_dist.ts",
     "dev": "vite",
