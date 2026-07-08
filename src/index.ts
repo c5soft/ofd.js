@@ -12,7 +12,7 @@ export {
   calPageBox,
   calPageBoxScale,
   renderPage,
-} from "./src/ofd/ofd";
+} from "./ofd/ofd";
 
 export type {
   PageBox,
@@ -20,4 +20,4 @@ export type {
   OFDDocument,
   DocumentInfo,
   ParseOptions,
-} from "./src/ofd/ofd";
+} from "./ofd/ofd";
