@@ -24,7 +24,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 入口与全局 Polyfill
 
-`index.ts` 是构建入口，重新导出来自 `src/ofd/ofd.ts` 的公开 API 和 TypeScript 类型。它在模块顶部设置了一个关键 polyfill：
+`src/index.ts` 是构建入口，重新导出来自 `src/ofd/ofd.ts` 的公开 API 和 TypeScript 类型。它在模块顶部设置了一个关键 polyfill：
 
 ```ts
 if (typeof window !== 'undefined' && typeof global === 'undefined') {
@@ -58,8 +58,9 @@ if (typeof window !== 'undefined' && typeof global === 'undefined') {
 
 ```text
 src/
+├── index.ts               # 构建入口，重新导出公共 API，包含全局 polyfill
 ├── ofd/                    # OFD 核心 (TypeScript)
-│   ├── ofd.ts              # 公共 API 入口
+│   ├── ofd.ts              # 公共 API 定义和类型
 │   ├── ofd_parser.ts       # 解析流水线 (ZIP→XML→JSON→结构化文档)
 │   ├── ofd_render.ts       # 页面渲染 (Canvas 路径 + SVG 文本 + DOM 图像)
 │   ├── ofd_util.ts         # 几何计算、坐标转换、颜色解析、HTML 解码

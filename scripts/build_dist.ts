@@ -21,7 +21,7 @@ async function buildDist(minify: boolean): Promise<void> {
   // Build ESM format
   console.log("\n🔨 Building ESM format...");
   // Externalize crypto - jsrsasign works without it in browsers
-  await $`bun build index.ts --target=browser --format=esm --external:crypto --outdir=${distDir}`;
+  await $`bun build src/index.ts --target=browser --format=esm --external:crypto --outdir=${distDir}`;
   await $`mv ${distDir}/index.js ${distDir}/ofd.js`;
   console.log("✓ ESM build completed: dist/ofd.js");
 
@@ -54,7 +54,7 @@ async function buildDist(minify: boolean): Promise<void> {
   // Build IIFE format with conditional minification
   console.log("\n🔨 Building IIFE format...");
   const iifeArgs = [
-    "bun", "build", "index.ts",
+    "bun", "build", "src/index.ts",
     "--target=browser",
     "--format=iife",
     "--outdir=" + distDir,
