@@ -8,13 +8,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **生产构建**: `bun run build` → scripts/build_dist.ts + --minify
 - **开发构建**: `bun run build:dev` → scripts/build_dist.ts（不压缩）
 - **开发服务器**: `bun run dev`（Vite dev server）
-- **代码检查**: `bun run lint`（eslint src/ index.ts）
-- **自动修复检查**: `bun run lint:fix`（eslint --fix）
 - **代码格式化**: `bun run format`（prettier --write）
 - **运行测试**: `bun test`（使用 bun 内置测试运行器，非 Jest）
 - **监听模式测试**: `bun run test:watch`
 - **测试覆盖率**: `bun run test:coverage`
-- **运行单个测试**: `bun test tests/ofd.test.js`（或用 `bun jest <文件>` 兼容 Jest）
+- **运行单个测试**: `bun test tests/ofd.test.js`
 - **TypeScript 类型检查**: `bunx tsc --noEmit`
 - **清理 node_modules 重装**: `rm -rf node_modules bun.lock && bun install`
 
@@ -150,7 +148,6 @@ dist/                       # 构建输出
 - **测试环境**: 使用 `bun:test` 内置测试运行器，`jsdom` 模拟浏览器 DOM。完全移除了 Jest 依赖。
 - **依赖树**: 见 [DEPENDENCY_TREE.md](DEPENDENCY_TREE.md) — 从叶子到根（`ofd.ts`）的单向无环依赖。
 - **测试**: `bun test` 运行 32 个测试（6 个文件）。所有测试通过。
-- **ESLint**: 配置在 `eslint.config.js`，使用 `@typescript-eslint` 插件，规则较宽松（`no-console: off`, `no-var: off`）。
 - **browserslist**: Chrome > 50, Firefox > 45, Safari > 10, Edge > 15。
 
 ## 工作区结构
