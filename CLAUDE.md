@@ -5,8 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 - **安装依赖**: `bun install`（根目录 + workspaces 自动安装）
-- **生产构建**: `bun run build` → scripts/build_dist.ts + --minify
-- **开发构建**: `bun run build:dev` → scripts/build_dist.ts（不压缩）
+- **生产构建**: `bun run build` → scripts/build.ts + --minify
+- **开发构建**: `bun run build:dev` → scripts/build.ts（不压缩）
 - **开发服务器**: `bun run dev`（Vite dev server）
 - **代码格式化**: `bun run format`（prettier --write）
 - **运行测试**: `bun test`（使用 bun 内置测试运行器，非 Jest）
@@ -124,10 +124,10 @@ dist/                       # 构建输出
 
 ### 构建系统
 
-- **构建工具**: `bun build`（通过 `scripts/build_dist.ts`）
+- **构建工具**: `bun build`（通过 `scripts/build.ts`）
 - **输出格式**: ESM (`dist/ofd.js`) + IIFE (`dist/ofd.min.js`，暴露 `window.OFD`)
 - **类型声明**: 通过 `tsc --emitDeclarationOnly` 从 `src/ofd/ofd.ts` 生成，再后处理移除 `calPageBox`/`calPageBoxScale`/`renderPage` 这三个内部 API 的声明
-- **入口**: `index.ts` → 构建后映射到 `dist/ofd.js` 和 `dist/ofd.min.js`
+- **入口**: `src/index.ts` → 构建后映射到 `dist/ofd.js` 和 `dist/ofd.min.js`
 
 ## 主要依赖
 

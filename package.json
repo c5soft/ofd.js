@@ -28,8 +28,8 @@
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
     "format": "prettier --write \"src/**/*.ts\"",
-    "build": "bun run scripts/build_dist.ts --minify",
-    "build:dev": "bun run scripts/build_dist.ts",
+    "build": "bun run scripts/build.ts --minify",
+    "build:dev": "bun run scripts/build.ts",
     "dev": "vite",
     "dev:build": "vite build",
     "prepublishOnly": "bun run build"
