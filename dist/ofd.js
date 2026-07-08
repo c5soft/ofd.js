@@ -36030,7 +36030,7 @@ var getPageScale = function() {
   return getPageScal();
 };
 
-// index.ts
+// src/index.ts
 if (typeof window !== "undefined" && typeof global === "undefined") {
   window.global = window;
 }
