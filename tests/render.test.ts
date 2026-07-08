@@ -1,10 +1,11 @@
 import { describe, it, expect } from "bun:test";
 import { JSDOM } from 'jsdom';
 import { renderOfd, renderOfdByScale } from '../src/index';
+import type { OFDDocument } from '../src/ofd/ofd';
 
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
 global.document = dom.window.document;
-global.window = dom.window as unknown as Window & typeof globalThis;
+// global.window = dom.window as unknown as Window & typeof globalThis;
 
 describe('OFD Rendering Functions', () => {
   const mockOfdDocument = {

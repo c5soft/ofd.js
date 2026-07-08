@@ -52,8 +52,9 @@
     "pdf-alternative"
   ],
   "dependencies": {
-    "jszip": "3.10.1",
     "fast-xml-parser": "^5.9.3",
+    "jszip": "3.10.1",
+    "ofd.js": "^1.5.0",
     "sm-crypto": "0.4.0"
   },
   "devDependencies": {

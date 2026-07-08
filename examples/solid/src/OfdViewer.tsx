@@ -1,5 +1,8 @@
 import { createSignal, createEffect, createResource } from 'solid-js';
-import { parseOfdDocument, renderOfd } from '../../../src';
+import { parseOfdDocument, renderOfd } from '../../../src/index';
+import type { OFDDocument } from '../../../src/index';
+// import { parseOfdDocument, renderOfd } from '@ycsx/ofdjs';
+// import type { OFDDocument } from '@ycsx/ofdjs';
 // import { parseOfdDocument, renderOfd } from '../../../dist/ofd';
 
 interface OfdFile {
@@ -11,8 +14,8 @@ export default function OfdViewer() {
   const [loading, setLoading] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
   const [fileInfo, setFileInfo] = createSignal<{ name: string; size: number; pageCount: number } | null>(null);
-  const [pages, setPages] = createSignal<HTMLDivElement[]>([]);
-  const [containerRef, setContainerRef] = createSignal<HTMLDivElement | null>(null);
+  const [pages, setPages] = createSignal<HTMLElement[]>([]);
+  const [containerRef, setContainerRef] = createSignal<HTMLElement | null>(null);
   const [selectedFile, setSelectedFile] = createSignal<string>('');
 
   // 获取文件列表
@@ -41,7 +44,7 @@ export default function OfdViewer() {
 
     parseOfdDocument({
       ofd: file,
-      success: (ofdDocs:any) => {
+      success: (ofdDocs:OFDDocument[]) => {
         const container = containerRef();
         if (!container) {
           setLoading(false);
@@ -92,7 +95,7 @@ export default function OfdViewer() {
       const arrayBuffer = url;
       parseOfdDocument({
         ofd: arrayBuffer,
-        success: (ofdDocs:any) => {
+        success: (ofdDocs:OFDDocument[]) => {
           const container = containerRef();
           if (!container) {
             setLoading(false);
@@ -101,6 +104,7 @@ export default function OfdViewer() {
 
           const screenWidth = container.clientWidth || 1024;
           const pageElements = renderOfd(screenWidth, ofdDocs[0]);
+          console.log(JSON.stringify(ofdDocs[0], null, 2));
 
           setFileInfo({
             name: name,

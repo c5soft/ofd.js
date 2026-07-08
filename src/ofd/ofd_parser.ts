@@ -555,6 +555,11 @@ const getJsonFromXmlContent = async function (zip: any, xmlName: string): Promis
  */
 const parseJbig2ImageFromZip = async function (zip: any, name: string): Promise<{ img: any; width: number; height: number; format: string }> {
   return new Promise((resolve, reject) => {
+    if (!zip.files[name]) {
+      console.warn(`JBIG2 image not found in OFD: ${name}`);
+      resolve({ img: new Uint8Array(0), width: 0, height: 0, format: 'gbig2' });
+      return;
+    }
     zip.files[name].async('uint8array').then(function (bytes: Uint8Array) {
       let jbig2 = new Jbig2Image();
       const img = jbig2.parse(bytes);
@@ -576,7 +581,13 @@ const parseOtherImageFromZip = async function (zip: any, name: string): Promise<
     if (name.startsWith('/')) {
       name = name.substring(1);
     }
-    zip.files[name].async('base64').then(function (bytes: string) {
+    const fileEntry = zip.files[name];
+    if (!fileEntry) {
+      console.warn(`Image file not found in OFD: ${name}`);
+      resolve('');
+      return;
+    }
+    fileEntry.async('base64').then(function (bytes: string) {
       const img = 'data:image/png;base64,' + bytes;
       resolve(img);
     }, function error(e: Error) {
