@@ -24,7 +24,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 入口与全局 Polyfill
 
-`src/index.ts` 是构建入口，重新导出来自 `src/ofd/ofd.ts` 的公开 API 和 TypeScript 类型。它在模块顶部设置了一个关键 polyfill：
+`src/ofd/ofd.ts` 是构建入口，同时也是公开 API 和 TypeScript 类型的定义源。模块顶部有一个关键 polyfill：
 
 ```ts
 if (typeof window !== 'undefined' && typeof global === 'undefined') {
@@ -32,7 +32,7 @@ if (typeof window !== 'undefined' && typeof global === 'undefined') {
 }
 ```
 
-这是浏览器兼容性 polyfill，确保依赖 `global` 对象的库在浏览器中正常工作，构建后的 ESM/IIFE 产物会自动包含此项。
+这是浏览器兼容性 polyfill，确保依赖 `global` 对象的库（JSZip 的依赖 `immediate`/`setimmediate` 被 bun build 内联后直接引用 `global`）在浏览器中正常工作。Vite dev 模式下 esbuild 预构建会自动处理此问题。
 
 ### 公开 API
 
@@ -58,7 +58,7 @@ if (typeof window !== 'undefined' && typeof global === 'undefined') {
 
 ```text
 src/
-├── index.ts               # 构建入口，重新导出公共 API，包含全局 polyfill
+├── ofd/ofd.ts            # 构建入口 & 公共 API 定义（含全局 polyfill）
 ├── ofd/                    # OFD 核心 (TypeScript)
 │   ├── ofd.ts              # 公共 API 定义和类型
 │   ├── ofd_parser.ts       # 解析流水线 (ZIP→XML→JSON→结构化文档)
@@ -127,7 +127,7 @@ dist/                       # 构建输出
 - **构建工具**: `bun build`（通过 `scripts/build.ts`）
 - **输出格式**: ESM (`dist/ofd.js`) + IIFE (`dist/ofd.min.js`，暴露 `window.OFD`)
 - **类型声明**: 通过 `tsc --emitDeclarationOnly` 从 `src/ofd/ofd.ts` 生成，再后处理移除 `calPageBox`/`calPageBoxScale`/`renderPage` 这三个内部 API 的声明
-- **入口**: `src/index.ts` → 构建后映射到 `dist/ofd.js` 和 `dist/ofd.min.js`
+- **入口**: `src/ofd/ofd.ts` → 构建后映射到 `dist/ofd.js` 和 `dist/ofd.min.js`
 
 ## 主要依赖
 

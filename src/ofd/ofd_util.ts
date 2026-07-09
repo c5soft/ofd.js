@@ -179,7 +179,7 @@ export function setMaxPageScal(scale: number): void {
  * 设置页面缩放值
  * @param scale - 缩放值
  */
-export function setPageScal(scale: number): void {
+export function setPageScale(scale: number): void {
   Scale = scale;
   Scale = Scale > MaxScale ? MaxScale : Scale;
 }
@@ -188,7 +188,7 @@ export function setPageScal(scale: number): void {
  * 获取当前页面缩放值
  * @returns 当前缩放倍数
  */
-export function getPageScal(): number {
+export function getPageScale(): number {
   return Scale;
 }
 
@@ -259,10 +259,21 @@ export function deltaFormatter(delta: string): number[] {
  * - @_DeltaY: 每个字符后的 Y 偏移量列表
  * - #text: 文本内容
  *
+/** OFD TextCode 对象 */
+interface TextCode {
+  '@_X'?: string;
+  '@_Y'?: string;
+  '@_DeltaX'?: string;
+  '@_DeltaY'?: string;
+  '#text'?: string;
+}
+
+/**
+ * 计算文本位置点
  * @param textCodes - TextCode 对象数组
  * @returns 文本位置点列表
  */
-export function calTextPoint(textCodes: any[]): Array<{ x: number; y: number; text: string }> {
+export function calTextPoint(textCodes: TextCode[]): Array<{ x: number; y: number; text: string }> {
   let x = 0;
   let y = 0;
   let textCodePointList: Array<{ x: number; y: number; text: string }> = [];

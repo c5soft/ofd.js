@@ -15847,7 +15847,7 @@ function getPageBox(page, document2) {
   }
   return null;
 }
-var calPageBox = function(screenWidth, document2, page) {
+function calPageBox(screenWidth, document2, page) {
   const boxStr = getPageBox(page, document2);
   if (!boxStr)
     return { x: 0, y: 0, w: 0, h: 0 };
@@ -15859,8 +15859,8 @@ var calPageBox = function(screenWidth, document2, page) {
   if (!box)
     return { x: 0, y: 0, w: 0, h: 0 };
   return converterBox(box);
-};
-var calPageBoxScale = function(document2, page) {
+}
+function calPageBoxScale(document2, page) {
   const boxStr = getPageBox(page, document2);
   if (!boxStr)
     return { x: 0, y: 0, w: 0, h: 0 };
@@ -15868,16 +15868,16 @@ var calPageBoxScale = function(document2, page) {
   if (!box)
     return { x: 0, y: 0, w: 0, h: 0 };
   return converterBox(box);
-};
-var renderLayerFromTemplate = function(tpls, template, pageDiv, fontResObj, drawParamResObj, multiMediaResObj) {
+}
+function renderLayerFromTemplate(tpls, template, pageDiv, fontResObj, drawParamResObj, multiMediaResObj) {
   let layers = [].concat(tpls[template["@_TemplateID"]]?.["json"]?.["ofd:Content"]?.["ofd:Layer"] || []);
   for (let layer of layers) {
     if (layer) {
       renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, false);
     }
   }
-};
-var renderPage = function(pageDiv, page, tpls, fontResObj, drawParamResObj, multiMediaResObj) {
+}
+function renderPage(pageDiv, page, tpls, fontResObj, drawParamResObj, multiMediaResObj) {
   const pageId = Object.keys(page)[0];
   const template = page[pageId]?.["json"]?.["ofd:Template"];
   if (Array.isArray(template)) {
@@ -15912,8 +15912,8 @@ var renderPage = function(pageDiv, page, tpls, fontResObj, drawParamResObj, mult
       renderAnnotation(pageDiv, annotation, fontResObj, drawParamResObj, multiMediaResObj);
     }
   }
-};
-var renderAnnotation = function(pageDiv, annotation, fontResObj, drawParamResObj, multiMediaResObj) {
+}
+function renderAnnotation(pageDiv, annotation, fontResObj, drawParamResObj, multiMediaResObj) {
   let div = document.createElement("div");
   let boundary = annotation["appearance"]?.["@_Boundary"];
   if (boundary) {
@@ -15925,8 +15925,8 @@ var renderAnnotation = function(pageDiv, annotation, fontResObj, drawParamResObj
   const contentLayer = annotation["appearance"];
   renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, false);
   pageDiv.appendChild(div);
-};
-var renderSealPage = function(pageDiv, docObj, pages, tpls, isStampAnnot, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj, SES_Signature, signedInfo) {
+}
+function renderSealPage(pageDiv, docObj, pages, tpls, isStampAnnot, stampAnnot, fontResObj, drawParamResObj, multiMediaResObj, SES_Signature, signedInfo) {
   for (const page of pages) {
     const pageId = Object.keys(page)[0];
     let stampAnnotBoundary = isStampAnnot && stampAnnot ? stampAnnot.boundary : { x: 0, y: 0, w: 0, h: 0 };
@@ -15962,8 +15962,8 @@ var renderSealPage = function(pageDiv, docObj, pages, tpls, isStampAnnot, stampA
     div.appendChild(contentWrapper);
     pageDiv.appendChild(div);
   }
-};
-var collectLayerObjects = function(layer, key) {
+}
+function collectLayerObjects(layer, key) {
   const objects = [];
   for (const item of [].concat(layer?.[key] || [])) {
     if (item)
@@ -15979,8 +15979,8 @@ var collectLayerObjects = function(layer, key) {
     }
   }
   return objects;
-};
-var renderLayer = function(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, isStampAnnot) {
+}
+function renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, isStampAnnot) {
   let fillColor = null;
   let strokeColor = null;
   let lineWith = converterDpi(0.353);
@@ -16021,8 +16021,8 @@ var renderLayer = function(pageDiv, fontResObj, drawParamResObj, multiMediaResOb
     fragment.appendChild(svg);
   }
   pageDiv.appendChild(fragment);
-};
-var createSvgTextElement = function(textCodePoint, textObject, style, fillColor, fillOpacity, ctm, hScale) {
+}
+function createSvgTextElement(textCodePoint, textObject, style, fillColor, fillOpacity, ctm, hScale) {
   let text = document.createElementNS("http://www.w3.org/2000/svg", "text");
   text.setAttribute("x", textCodePoint.x.toString());
   text.setAttribute("y", textCodePoint.y.toString());
@@ -16041,8 +16041,8 @@ var createSvgTextElement = function(textCodePoint, textObject, style, fillColor,
   text.setAttribute("style", style);
   text.setAttribute("data-oid", textObject["@_ID"]);
   return text;
-};
-var getImageBoundary = function(imageObject) {
+}
+function getImageBoundary(imageObject) {
   const boundary = parseStBox(imageObject["@_Boundary"]);
   const ctm = imageObject["@_CTM"];
   if (ctm && boundary && boundary.x === 0 && boundary.y === 0) {
@@ -16055,8 +16055,8 @@ var getImageBoundary = function(imageObject) {
     };
   }
   return boundary ? converterBox(boundary) : { x: 0, y: 0, w: 0, h: 0 };
-};
-var renderImageObject = function(pageWidth, pageHeight, multiMediaResObj, imageObject) {
+}
+function renderImageObject(pageWidth, pageHeight, multiMediaResObj, imageObject) {
   const boundary = getImageBoundary(imageObject);
   const resId = imageObject["@_ResourceID"];
   const media = multiMediaResObj?.[resId];
@@ -16070,8 +16070,8 @@ var renderImageObject = function(pageWidth, pageHeight, multiMediaResObj, imageO
   } else {
     return renderImageOnDiv(pageWidth, pageHeight, media.img, boundary, null, false, null, null, zIndex);
   }
-};
-var renderImageOnCanvas = function(img, imgWidth, imgHeight, boundary, oid) {
+}
+function renderImageOnCanvas(img, imgWidth, imgHeight, boundary, oid) {
   const arr = new Uint8ClampedArray(4 * imgWidth * imgHeight);
   for (var i = 0;i < img.length; i++) {
     arr[4 * i] = img[i];
@@ -16097,8 +16097,8 @@ var renderImageOnCanvas = function(img, imgWidth, imgHeight, boundary, oid) {
      width:${boundary.w}px;height:${boundary.h}px;z-index:${oid};
      image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;`);
   return canvas;
-};
-var renderImageOnDiv = function(pageWidth, pageHeight, imgSrc, boundary, clip, isStampAnnot, SES_Signature, signedInfo, oid) {
+}
+function renderImageOnDiv(pageWidth, pageHeight, imgSrc, boundary, clip, isStampAnnot, SES_Signature, signedInfo, oid) {
   let div = document.createElement("div");
   if (isStampAnnot) {
     div.setAttribute("name", "seal_img_div");
@@ -16144,8 +16144,8 @@ var renderImageOnDiv = function(pageWidth, pageHeight, imgSrc, boundary, clip, i
      top: ${c ? boundary.y : boundary.y < 0 ? 0 : boundary.y}px;
      width: ${w}px; height: ${h}px; ${c};z-index: ${oid};`);
   return div;
-};
-var renderTextObject = function(fontResObj, textObject, defaultFillColor) {
+}
+function renderTextObject(fontResObj, textObject, defaultFillColor) {
   let defaultFillOpacity = 1;
   let boundary = parseStBox(textObject["@_Boundary"]);
   boundary = boundary ? converterBox(boundary) : { x: 0, y: 0, w: 0, h: 0 };
@@ -16179,30 +16179,30 @@ var renderTextObject = function(fontResObj, textObject, defaultFillColor) {
   svg.setAttribute("style", `overflow:visible;position:absolute;width:${width}px;height:${height}px;
      left:${left}px;top:${top}px;z-index:${textObject["pfIndex"]}`);
   return svg;
-};
-var getDrawParam = function(drawParamResObj, drawParam) {
+}
+function getDrawParam(drawParamResObj, drawParam) {
   let obj = drawParamResObj?.[drawParam];
   if (obj?.relative) {
     obj = drawParamResObj?.[obj.relative] || obj;
   }
   return obj;
-};
-var getDrawParamColor = function(drawParamResObj, drawParam, colorKey) {
+}
+function getDrawParamColor(drawParamResObj, drawParam, colorKey) {
   const color = getDrawParam(drawParamResObj, drawParam)?.[colorKey];
   return color ? parseColor(color) : null;
-};
-var parseAlpha = function(alpha) {
+}
+function parseAlpha(alpha) {
   if (alpha === undefined || alpha === null || alpha === "")
     return 1;
   const value = parseFloat(alpha);
   if (isNaN(value))
     return 1;
   return value > 1 ? value / 255 : value;
-};
-var getColorAlpha = function(colorObject) {
+}
+function getColorAlpha(colorObject) {
   return parseAlpha(colorObject?.["@_Alpha"]);
-};
-var getCanvasLineCap = function(lineCap) {
+}
+function getCanvasLineCap(lineCap) {
   if (lineCap === "Butt")
     return "butt";
   if (lineCap === "Round")
@@ -16210,18 +16210,18 @@ var getCanvasLineCap = function(lineCap) {
   if (lineCap === "Square")
     return "square";
   return "butt";
-};
-var getCanvasLineJoin = function(join) {
+}
+function getCanvasLineJoin(join) {
   if (join === "Round")
     return "round";
   if (join === "Bevel")
     return "bevel";
   return "miter";
-};
-var getCanvasFillRule = function(rule) {
+}
+function getCanvasFillRule(rule) {
   return rule === "Even-Odd" || rule === "evenodd" ? "evenodd" : "nonzero";
-};
-var getPathRenderStyle = function(drawParamResObj, pathObject, defaultFillColor, defaultStrokeColor, defaultLineWith) {
+}
+function getPathRenderStyle(drawParamResObj, pathObject, defaultFillColor, defaultStrokeColor, defaultLineWith) {
   let lineWidth = pathObject["@_LineWidth"];
   let fillAlpha = 1, strokeAlpha = 1;
   let lineCap = pathObject["@_Cap"];
@@ -16267,8 +16267,8 @@ var getPathRenderStyle = function(drawParamResObj, pathObject, defaultFillColor,
     miterLimit: miterLimit ? parseFloat(miterLimit) : 10,
     fillRule: getCanvasFillRule(pathObject["@_Rule"])
   };
-};
-var drawPathPoints = function(context, points) {
+}
+function drawPathPoints(context, points) {
   context.beginPath();
   for (const point of points) {
     if (point.type === "M")
@@ -16282,8 +16282,8 @@ var drawPathPoints = function(context, points) {
     else if (point.type === "C")
       context.closePath();
   }
-};
-var renderPathObjectsOnCanvas = function(pageDiv, drawParamResObj, pathObjects, defaultFillColor, defaultStrokeColor, defaultLineWith, isStampAnnot) {
+}
+function renderPathObjectsOnCanvas(pageDiv, drawParamResObj, pathObjects, defaultFillColor, defaultStrokeColor, defaultLineWith, isStampAnnot) {
   const pageWidth = parseFloat(pageDiv.style.width.replace("px", ""));
   const pageHeight = parseFloat(pageDiv.style.height.replace("px", ""));
   const pixelRatio = window.devicePixelRatio || 1;
@@ -16335,7 +16335,7 @@ var renderPathObjectsOnCanvas = function(pageDiv, drawParamResObj, pathObjects, 
     context.restore();
   }
   return canvas;
-};
+}
 
 // node_modules/.bun/fast-xml-parser@5.9.3/node_modules/fast-xml-parser/src/util.js
 var nameStartChar = ":A-Za-z_\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD";
@@ -24362,6 +24362,126 @@ function sha1(data) {
   const hex = (n) => n.toString(16).padStart(8, "0");
   return hex(H0) + hex(H1) + hex(H2) + hex(H3) + hex(H4);
 }
+function md5(data) {
+  const bitLen = data.length * 8;
+  const padLen = data.length + 72 & ~63;
+  const padded = new Uint8Array(padLen);
+  padded.set(data);
+  padded[data.length] = 128;
+  const view = new DataView(padded.buffer);
+  view.setUint32(padLen - 8, bitLen >>> 0, true);
+  view.setUint32(padLen - 4, Math.floor(bitLen / 4294967296), true);
+  const S = [
+    7,
+    12,
+    17,
+    22,
+    7,
+    12,
+    17,
+    22,
+    7,
+    12,
+    17,
+    22,
+    7,
+    12,
+    17,
+    22,
+    5,
+    9,
+    14,
+    20,
+    5,
+    9,
+    14,
+    20,
+    5,
+    9,
+    14,
+    20,
+    5,
+    9,
+    14,
+    20,
+    4,
+    11,
+    16,
+    23,
+    4,
+    11,
+    16,
+    23,
+    4,
+    11,
+    16,
+    23,
+    4,
+    11,
+    16,
+    23,
+    6,
+    10,
+    15,
+    21,
+    6,
+    10,
+    15,
+    21,
+    6,
+    10,
+    15,
+    21,
+    6,
+    10,
+    15,
+    21
+  ];
+  const T = new Uint32Array(64);
+  for (let i2 = 0;i2 < 64; i2++) {
+    T[i2] = Math.floor(Math.abs(Math.sin(i2 + 1)) * 4294967296) >>> 0;
+  }
+  const rotl = (x, n) => (x << n | x >>> 32 - n) >>> 0;
+  let a0 = 1732584193, b0 = 4023233417, c0 = 2562383102, d0 = 271733878;
+  for (let offset = 0;offset < padLen; offset += 64) {
+    const M = new Uint32Array(16);
+    for (let i2 = 0;i2 < 16; i2++) {
+      M[i2] = view.getUint32(offset + i2 * 4, true);
+    }
+    let A = a0, B = b0, C = c0, D = d0;
+    for (let i2 = 0;i2 < 64; i2++) {
+      let F, g;
+      if (i2 < 16) {
+        F = B & C | ~B & D;
+        g = i2;
+      } else if (i2 < 32) {
+        F = D & B | ~D & C;
+        g = (5 * i2 + 1) % 16;
+      } else if (i2 < 48) {
+        F = B ^ C ^ D;
+        g = (3 * i2 + 5) % 16;
+      } else {
+        F = C ^ (B | ~D);
+        g = 7 * i2 % 16;
+      }
+      F = F + A + T[i2] + M[g] >>> 0;
+      A = D;
+      D = C;
+      C = B;
+      B = B + rotl(F, S[i2]) >>> 0;
+    }
+    a0 = a0 + A >>> 0;
+    b0 = b0 + B >>> 0;
+    c0 = c0 + C >>> 0;
+    d0 = d0 + D >>> 0;
+  }
+  const le = (n) => {
+    const b = new Uint8Array(4);
+    new DataView(b.buffer).setUint32(0, n, true);
+    return Array.from(b).map((x) => x.toString(16).padStart(2, "0")).join("");
+  };
+  return le(a0) + le(b0) + le(c0) + le(d0);
+}
 var SHA1_DIGEST_INFO_PREFIX = new Uint8Array([
   48,
   33,
@@ -24477,6 +24597,19 @@ function modPow(base, exp, mod) {
 }
 
 // src/ofd/verify_signature_util.ts
+function digestByteArray(data, hashedBase64, checkMethod) {
+  const hashedHex = Uint8ArrayToHexString(new Uint8Array(Base64.decode(hashedBase64)));
+  checkMethod = checkMethod.toLowerCase();
+  if (checkMethod.indexOf("1.2.156.10197.1.401") >= 0 || checkMethod.indexOf("sm3") >= 0) {
+    return hashedHex === import_sm_crypto.sm3(Array.from(data));
+  } else if (checkMethod.indexOf("md5") >= 0) {
+    return hashedHex === md5(data);
+  } else if (checkMethod.indexOf("sha1") >= 0) {
+    return hashedHex === sha1(data);
+  } else {
+    return "";
+  }
+}
 function SES_Signature_Verify(SES_Signature) {
   try {
     let signAlg = SES_Signature.realVersion < 4 ? SES_Signature.toSign.signatureAlgorithm : SES_Signature.signatureAlgID;
@@ -24527,6 +24660,14 @@ async function parseSesSignature(zip, name) {
     });
   });
 }
+function digestCheckProcess(arr) {
+  let ret = true;
+  for (const val of arr) {
+    const value = digestByteArray(val.fileData, val.hashed, val.checkMethod);
+    ret = ret && value === true;
+  }
+  return ret;
+}
 function decodeText(val) {
   try {
     let der = reHex.test(val) ? Hex.decode(val) : Base64.unarmor(val);
@@ -24534,7 +24675,7 @@ function decodeText(val) {
     return res;
   } catch (e) {
     console.log(e);
-    return {};
+    return { ofdArray: null, type: null, SES_Signature: {}, verifyRet: false };
   }
 }
 function decode(der, offset) {
@@ -24559,7 +24700,7 @@ function decode(der, offset) {
     };
   } catch (_e) {
     console.log(_e);
-    return {};
+    return { ofdArray: null, type: null, SES_Signature: {}, verifyRet: false };
   }
 }
 function decodeUTCTime(str) {
@@ -24719,7 +24860,7 @@ function decodeSES_Signature(der, offset) {
       };
     } catch (e2) {
       console.log(e2);
-      SES_Signature = {};
+      SES_Signature = { realVersion: 0, toSignDer: new Uint8Array(0), signature: "" };
     }
   }
   return SES_Signature;
@@ -24805,17 +24946,17 @@ function decodeCert(asn1) {
     };
   } catch (e) {
     console.log("decodeCert fail:", e);
-    return {};
+    return { subject: new Map, subjectPublicKeyInfo: { subjectPublicKey: "" } };
   }
 }
 
 // src/ofd/ofd_parser.ts
-var parseOfdSteps = async function(file) {
+async function parseOfdSteps(file) {
   const zip = await unzipOfd(file);
   const docRoot = await getDocRoots(zip);
   return await parseSingleDoc(docRoot);
-};
-var unzipOfd = function(file) {
+}
+function unzipOfd(file) {
   return new Promise((resolve, reject) => {
     import_jszip.default.loadAsync(file).then(function(zip) {
       resolve(zip);
@@ -24823,15 +24964,15 @@ var unzipOfd = function(file) {
       reject(e);
     });
   });
-};
-var getDocRoots = async function(zip) {
+}
+async function getDocRoots(zip) {
   const data = await getJsonFromXmlContent(zip, "OFD.xml");
   const docbodys = data["json"]["ofd:OFD"]["ofd:DocBody"];
   let array = [];
   array = array.concat(docbodys);
   return [zip, array];
-};
-var parseSingleDoc = async function([zip, array]) {
+}
+async function parseSingleDoc([zip, array]) {
   let docs = [];
   for (let docbody of array) {
     if (docbody) {
@@ -24845,11 +24986,15 @@ var parseSingleDoc = async function([zip, array]) {
     }
   }
   return docs;
-};
-var doGetDocRoot = async function(zip, docbody) {
+}
+async function doGetDocRoot(zip, docbody) {
   let docRoot = docbody["ofd:DocRoot"];
+  if (typeof docRoot === "object" && docRoot["#text"]) {
+    docRoot = docRoot["#text"];
+  }
   docRoot = replaceFirstSlash(docRoot);
-  const doc = docRoot.split("/")[0];
+  const lastSlash = docRoot.lastIndexOf("/");
+  const doc = lastSlash >= 0 ? docRoot.substring(0, lastSlash) : "";
   const signatures = docbody["ofd:Signatures"];
   const stampAnnot = await getSignature(zip, signatures, doc);
   let stampAnnotArray = {};
@@ -24866,7 +25011,7 @@ var doGetDocRoot = async function(zip, docbody) {
           stampAnnotArray[stamp.stampAnnot["@_PageRef"]].push({ type: "ofd", obj: stampObj, stamp });
         }
       } else if (stamp.sealObj.type === "png") {
-        let img = "data:image/png;base64," + btoa(String.fromCharCode.apply(null, stamp.sealObj.ofdArray));
+        let img = "data:image/png;base64," + btoa(String.fromCharCode(...stamp.sealObj.ofdArray));
         let stampArray = [];
         stampArray = stampArray.concat(stamp.stampAnnot);
         for (const annot of stampArray) {
@@ -24887,8 +25032,8 @@ var doGetDocRoot = async function(zip, docbody) {
     }
   }
   return [zip, doc, docRoot, stampAnnotArray];
-};
-var getDocument = async function([zip, doc, docRoot, stampAnnot]) {
+}
+async function getDocument([zip, doc, docRoot, stampAnnot]) {
   const data = await getJsonFromXmlContent(zip, docRoot);
   const documentObj = data["json"]["ofd:Document"];
   let annotations = documentObj["ofd:Annotations"];
@@ -24908,8 +25053,8 @@ var getDocument = async function([zip, doc, docRoot, stampAnnot]) {
   }
   const annotationObjs = await getAnnotations(annoBase, array, doc, zip);
   return [zip, doc, documentObj, stampAnnot, annotationObjs];
-};
-var getAnnotations = async function(annoBase, annotations, doc, zip) {
+}
+async function getAnnotations(annoBase, annotations, doc, zip) {
   let annotationObjs = {};
   for (let anno of annotations) {
     if (!anno)
@@ -24942,8 +25087,8 @@ var getAnnotations = async function(annoBase, annotations, doc, zip) {
     }
   }
   return annotationObjs;
-};
-var getDocumentRes = async function([zip, doc, Document, stampAnnot, annotationObjs]) {
+}
+async function getDocumentRes([zip, doc, Document, stampAnnot, annotationObjs]) {
   let documentResPath = Document["ofd:CommonData"]["ofd:DocumentRes"];
   let fontResObj = {};
   let drawParamResObj = {};
@@ -24961,8 +25106,8 @@ var getDocumentRes = async function([zip, doc, Document, stampAnnot, annotationO
     }
   }
   return [zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj];
-};
-var getPublicRes = async function([zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj]) {
+}
+async function getPublicRes([zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj]) {
   let publicResPath = Document["ofd:CommonData"]["ofd:PublicRes"];
   if (publicResPath) {
     if (publicResPath.indexOf(doc) == -1) {
@@ -24980,8 +25125,8 @@ var getPublicRes = async function([zip, doc, Document, stampAnnot, annotationObj
     }
   }
   return [zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj];
-};
-var getTemplatePage = async function([zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj]) {
+}
+async function getTemplatePage([zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj]) {
   let templatePages = Document["ofd:CommonData"]["ofd:TemplatePage"];
   let array = [];
   array = array.concat(templatePages);
@@ -24993,8 +25138,8 @@ var getTemplatePage = async function([zip, doc, Document, stampAnnot, annotation
     }
   }
   return [zip, doc, Document, stampAnnot, annotationObjs, tpls, fontResObj, drawParamResObj, multiMediaResObj];
-};
-var getPage = async function([zip, doc, Document, stampAnnot, annotationObjs, tpls, fontResObj, drawParamResObj, multiMediaResObj]) {
+}
+async function getPage([zip, doc, Document, stampAnnot, annotationObjs, tpls, fontResObj, drawParamResObj, multiMediaResObj]) {
   let pages = Document["ofd:Pages"]["ofd:Page"];
   let array = [];
   array = array.concat(pages);
@@ -25024,8 +25169,8 @@ var getPage = async function([zip, doc, Document, stampAnnot, annotationObjs, tp
     drawParamResObj,
     multiMediaResObj
   };
-};
-var getFont = async function(res) {
+}
+async function getFont(res) {
   const fonts = res["ofd:Fonts"];
   let fontResObj = {};
   if (fonts) {
@@ -25038,8 +25183,8 @@ var getFont = async function(res) {
     }
   }
   return fontResObj;
-};
-var getDrawParam2 = async function(res) {
+}
+async function getDrawParam2(res) {
   const drawParams = res["ofd:DrawParams"];
   let drawParamResObj = {};
   if (drawParams) {
@@ -25057,8 +25202,8 @@ var getDrawParam2 = async function(res) {
     }
   }
   return drawParamResObj;
-};
-var getMultiMediaRes = async function(zip, res, doc) {
+}
+async function getMultiMediaRes(zip, res, doc) {
   const multiMedias = res["ofd:MultiMedias"];
   let multiMediaResObj = {};
   if (multiMedias) {
@@ -25092,8 +25237,8 @@ var getMultiMediaRes = async function(zip, res, doc) {
     }
   }
   return multiMediaResObj;
-};
-var parsePage = async function(zip, obj, doc) {
+}
+async function parsePage(zip, obj, doc) {
   let pagePath = obj["@_BaseLoc"];
   if (pagePath.indexOf(doc) == -1) {
     pagePath = `${doc}/${pagePath}`;
@@ -25102,8 +25247,8 @@ var parsePage = async function(zip, obj, doc) {
   let pageObj = {};
   pageObj[obj["@_ID"]] = { json: data["json"]["ofd:Page"], xml: data["xml"] };
   return pageObj;
-};
-var getSignature = async function(zip, signatures, doc) {
+}
+async function getSignature(zip, signatures, doc) {
   let stampAnnot = [];
   if (signatures) {
     signatures = replaceFirstSlash(signatures);
@@ -25132,8 +25277,8 @@ var getSignature = async function(zip, signatures, doc) {
     }
   }
   return stampAnnot;
-};
-var getSignatureData = async function(zip, signature, signatureID) {
+}
+async function getSignatureData(zip, signature, signatureID) {
   const data = await getJsonFromXmlContent(zip, signature);
   let signedValue = data["json"]["ofd:Signature"]["ofd:SignedValue"];
   signedValue = signedValue.toString().replace("/", "");
@@ -25142,7 +25287,6 @@ var getSignatureData = async function(zip, signature, signatureID) {
   }
   let sealObj = await parseSesSignature(zip, signedValue);
   const checkMethod = data["json"]["ofd:Signature"]["ofd:SignedInfo"]["ofd:References"]["@_CheckMethod"];
-  globalThis.toBeChecked = new Map;
   let arr = [];
   const references = data["json"]["ofd:Signature"]["ofd:SignedInfo"]["ofd:References"]["ofd:Reference"];
   const refArray = [].concat(references);
@@ -25155,31 +25299,43 @@ var getSignatureData = async function(zip, signature, signatureID) {
     const fileData = await getFileData(zip, key);
     arr.push({ fileData, hashed, checkMethod });
   }
-  globalThis.toBeChecked.set(signatureID, arr);
+  const fileDigestVerified = digestCheckProcess(arr);
   return {
     stampAnnot: data["json"]["ofd:Signature"]["ofd:SignedInfo"]["ofd:StampAnnot"],
     sealObj,
     signedInfo: {
       signatureID,
       VerifyRet: sealObj.verifyRet,
+      fileDigestVerified,
       Provider: data["json"]["ofd:Signature"]["ofd:SignedInfo"]["ofd:Provider"],
       SignatureMethod: data["json"]["ofd:Signature"]["ofd:SignedInfo"]["ofd:SignatureMethod"],
       SignatureDateTime: data["json"]["ofd:Signature"]["ofd:SignedInfo"]["ofd:SignatureDateTime"]
     }
   };
-};
-var getFileData = async function(zip, name) {
-  return zip.files[name].async("uint8array");
-};
-var getSealDocumentObj = async function(stampAnnot) {
+}
+async function getFileData(zip, name) {
+  const entry = zip.files[name];
+  if (!entry) {
+    console.warn(`File not found in OFD: ${name}`);
+    return null;
+  }
+  return entry.async("uint8array");
+}
+async function getSealDocumentObj(stampAnnot) {
   return parseOfdSteps(stampAnnot.sealObj.ofdArray);
-};
-var getJsonFromXmlContent = async function(zip, xmlName) {
+}
+async function getJsonFromXmlContent(zip, xmlName) {
   return new Promise((resolve, reject) => {
     if (xmlName === "Doc_0/TPLS/Tpl_0/Content.xml") {
       xmlName = "Doc_0/Tpls/Tpl_0/Content.xml";
     }
-    zip.files[xmlName].async("string").then(function(content) {
+    const fileEntry = zip.files[xmlName];
+    if (!fileEntry) {
+      console.warn(`XML file not found in OFD: ${xmlName}`);
+      resolve({ xml: "", json: { "ofd:Page": {} } });
+      return;
+    }
+    fileEntry.async("string").then(function(content) {
       let ops = {
         attributeNamePrefix: "@_",
         ignoreAttributes: false,
@@ -25194,9 +25350,14 @@ var getJsonFromXmlContent = async function(zip, xmlName) {
       reject(e);
     });
   });
-};
-var parseJbig2ImageFromZip = async function(zip, name) {
+}
+async function parseJbig2ImageFromZip(zip, name) {
   return new Promise((resolve, reject) => {
+    if (!zip.files[name]) {
+      console.warn(`JBIG2 image not found in OFD: ${name}`);
+      resolve({ img: new Uint8Array(0), width: 0, height: 0, format: "gbig2" });
+      return;
+    }
     zip.files[name].async("uint8array").then(function(bytes) {
       let jbig2 = new Jbig2Image;
       const img = jbig2.parse(bytes);
@@ -25205,22 +25366,31 @@ var parseJbig2ImageFromZip = async function(zip, name) {
       reject(e);
     });
   });
-};
-var parseOtherImageFromZip = async function(zip, name) {
+}
+async function parseOtherImageFromZip(zip, name) {
   return new Promise((resolve, reject) => {
     if (name.startsWith("/")) {
       name = name.substring(1);
     }
-    zip.files[name].async("base64").then(function(bytes) {
+    const fileEntry = zip.files[name];
+    if (!fileEntry) {
+      console.warn(`Image file not found in OFD: ${name}`);
+      resolve("");
+      return;
+    }
+    fileEntry.async("base64").then(function(bytes) {
       const img = "data:image/png;base64," + bytes;
       resolve(img);
     }, function error(e) {
       reject(e);
     });
   });
-};
+}
 
 // src/ofd/ofd.ts
+if (typeof window !== "undefined" && typeof global === "undefined") {
+  window.global = window;
+}
 function parseOfdDocument(options) {
   function doParseOFD(opts) {
     parseOfdSteps(opts.ofd).then((data) => {
@@ -25251,7 +25421,7 @@ function parseOfdDocument(options) {
     });
   }
 }
-var renderOfd = function(screenWidth, ofd) {
+function renderOfd(screenWidth, ofd) {
   let divArray = [];
   if (!ofd)
     return divArray;
@@ -25265,8 +25435,8 @@ var renderOfd = function(screenWidth, ofd) {
     divArray.push(pageDiv);
   }
   return divArray;
-};
-var renderOfdByScale = function(ofd) {
+}
+function renderOfdByScale(ofd) {
   let divArray = [];
   if (!ofd)
     return divArray;
@@ -25280,17 +25450,12 @@ var renderOfdByScale = function(ofd) {
     divArray.push(pageDiv);
   }
   return divArray;
-};
-var setPageScale = function(scale) {
+}
+function setPageScale(scale) {
   setPageScal(scale);
-};
-var getPageScale = function() {
+}
+function getPageScale() {
   return getPageScal();
-};
-
-// src/index.ts
-if (typeof window !== "undefined" && typeof global === "undefined") {
-  window.global = window;
 }
 export {
   setPageScale,

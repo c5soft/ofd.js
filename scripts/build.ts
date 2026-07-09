@@ -18,43 +18,10 @@ async function buildDist(minify: boolean): Promise<void> {
   await mkdir(distDir, { recursive: true });
   console.log(`✓ Created directory: ${distDir}`);
 
-  // Build ESM format
-  console.log("\n🔨 Building ESM format...");
-  // Externalize crypto - jsrsasign works without it in browsers
-  await $`bun build src/index.ts --target=browser --format=esm --external:crypto --outdir=${distDir}`;
-  await $`mv ${distDir}/index.js ${distDir}/ofd.js`;
-  console.log("✓ ESM build completed: dist/ofd.js");
-
-  // Generate TypeScript declarations
-  console.log("\n📝 Generating TypeScript declarations...");
-  // Run tsc with tsconfig.json (already has skipLibCheck and correct settings)
-  await $`bun x tsc --emitDeclarationOnly 2>/dev/null; true`;
-  // Copy the declaration from src/ofd/ofd.d.ts (generated from source) directly to dist/ofd.d.ts
-  // This ensures ofd.d.ts contains the actual type declarations directly from the source,
-  // not just a re-export from index.ts
-  const srcDecl = path.join(distDir, "src", "ofd", "ofd.d.ts");
-  const destDecl = path.join(distDir, "ofd.d.ts");
-  if (await Bun.file(srcDecl).exists()) {
-    let content = await Bun.file(srcDecl).text();
-    // Remove the import line that imports calPageBox, calPageBoxScale, renderPage from './ofd_render'
-    content = content.replace(/^import.*\{.*calPageBox.*\}.*from.*ofd_render.*;\n/m, '');
-    // Remove any remaining references to these three identifiers in export list
-    content = content.replace(/\b(calPageBox|calPageBoxScale|renderPage)\b\s*,?\s*/g, '');
-    // Clean up extra commas that might be left behind
-    content = content.replace(/,\s*\]/g, ']');
-    await Bun.write(destDecl, content);
-    // Remove the generated src directory and any sub-module declarations (jbig2, ofd)
-    await $`rm -rf ${distDir}/src ${distDir}/index.d.ts ${distDir}/jbig2 ${distDir}/ofd 2>/dev/null; true`;
-  }
-  // Remove declarations for internal modules (npm users only need the public API)
-  console.log("✓ TypeScript declarations generated from src/ofd/ofd.ts: dist/ofd.d.ts");
-  console.log("✓ Removed unused: calPageBox, calPageBoxScale, renderPage");
-  console.log("✓ Removed subdirectories: jbig2/, ofd/");
-
-  // Build IIFE format with conditional minification
+  // Build IIFE format first (rename before ESM to avoid name collision)
   console.log("\n🔨 Building IIFE format...");
   const iifeArgs = [
-    "bun", "build", "src/index.ts",
+    "bun", "build", "src/ofd/ofd.ts",
     "--target=browser",
     "--format=iife",
     "--outdir=" + distDir,
@@ -65,7 +32,7 @@ async function buildDist(minify: boolean): Promise<void> {
     iifeArgs.push("--minify");
   }
   await $`${iifeArgs}`;
-  await $`mv ${distDir}/index.js ${distDir}/ofd.min.js`;
+  await $`mv ${distDir}/ofd.js ${distDir}/ofd.min.js`;
   // Remove new Function usage from setimmediate polyfill for CSP compatibility
   let iifeContent = await Bun.file(path.join(distDir, "ofd.min.js")).text();
   iifeContent = iifeContent.replace(
@@ -80,6 +47,31 @@ async function buildDist(minify: boolean): Promise<void> {
   await Bun.write(path.join(distDir, "ofd.min.js"), iifeContent);
   console.log("✓ Removed new Function from setimmediate and get-intrinsic in IIFE");
   console.log(`✓ IIFE build completed: dist/ofd.min.js (minify=${minify})`);
+
+  // Build ESM format
+  console.log("\n🔨 Building ESM format...");
+  // Externalize crypto - jsrsasign works without it in browsers
+  await $`bun build src/ofd/ofd.ts --target=browser --format=esm --external:crypto --outdir=${distDir}`;
+  console.log("✓ ESM build completed: dist/ofd.js");
+
+  // Generate TypeScript declarations
+  console.log("\n📝 Generating TypeScript declarations...");
+  await $`bun x tsc --emitDeclarationOnly 2>/dev/null; true`;
+  const srcDecl = path.join(distDir, "src", "ofd", "ofd.d.ts");
+  const destDecl = path.join(distDir, "ofd.d.ts");
+  if (await Bun.file(srcDecl).exists()) {
+    let content = await Bun.file(srcDecl).text();
+    // Remove import of internal helpers from ofd_render
+    content = content.replace(/^import.*\{.*calPageBox.*\}.*from.*ofd_render.*;\n/m, '');
+    // Remove references to calPageBox, calPageBoxScale, renderPage from export shapes
+    content = content.replace(/\b(calPageBox|calPageBoxScale|renderPage)\b\s*,?\s*/g, '');
+    content = content.replace(/,\s*\]/g, ']');
+    await Bun.write(destDecl, content);
+    // Clean up generated sub-directories from tsc output
+    await $`rm -rf ${distDir}/src ${distDir}/index.d.ts ${distDir}/jbig2 ${distDir}/ofd 2>/dev/null; true`;
+  }
+  console.log("✓ TypeScript declarations generated: dist/ofd.d.ts");
+  console.log("✓ Removed internal API types: calPageBox, calPageBoxScale, renderPage");
 
   console.log("\n✅ Build completed successfully!\n");
 }

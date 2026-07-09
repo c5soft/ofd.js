@@ -1,21 +1,39 @@
 /**
- * OFD.js 主入口
+ * ofdts 核心模块
  *
- * 提供 OFD 文档解析和渲染的公共 API。
- * 支持解析 OFD 文件（ArrayBuffer/File/URL）并渲染为 DOM 元素。
+ * 提供 OFD（GB/T 33190-2016 开放式文档格式）的解析与渲染公共 API。
+ * 支持从 ArrayBuffer、File 对象或 URL 解析 OFD 文档，并将其渲染为 HTML DOM 元素。
  *
- * 主要导出：
- * - parseOfdDocument() - 解析 OFD 文档
- * - renderOfd() - 按指定宽度渲染文档
- * - renderOfdByScale() - 使用配置的缩放渲染文档
- * - setPageScale() / getPageScale() - 缩放控制
+ * ## 解析 API
+ *
+ * | 函数 | 说明 |
+ * |------|------|
+ * | `parseOfdDocument(options)` | 解析 OFD 文档，输入支持 URL / File / ArrayBuffer |
+ * | `setPageScale(scale)` | 设置全局页面缩放倍数 |
+ * | `getPageScale()` | 获取当前全局页面缩放倍数 |
+ *
+ * ## 渲染 API
+ *
+ * | 函数 | 说明 |
+ * |------|------|
+ * | `renderOfd(screenWidth, ofd)` | 按指定屏幕宽度（像素）渲染所有页面 |
+ * | `renderOfdByScale(ofd)` | 使用预配置的全局缩放渲染所有页面 |
+ *
+ * ## 类型导出
+ *
+ * | 类型 | 说明 |
+ * |------|------|
+ * | `OFDDocument` | 解析后的完整文档对象 |
+ * | `Page` | 页面映射对象 `{pageId: PageContent}` |
+ * | `PageContent` | 页面解析内容（JSON/XML/签章/注释） |
+ * | `PageBox` | 页面尺寸（宽、高，像素） |
+ * | `DocumentInfo` | 文档元信息 |
+ * | `ParseOptions` | 解析选项（ofd 源 + 回调） |
+ * | `FontResObj` | 字体资源映射 |
+ * | `DrawParamResObj` | 绘制参数资源映射 |
+ * | `MultiMediaResObj` | 多媒体资源映射 |
  *
  * 参照标准：GB/T 33190-2016
- * Modify by Ycsx on 2026-06-25
- * - 修改导出使其符合 eslint 规范
- * - 依赖版本升级
- * - Template 模式使用作者原方式展示
- * - PathContent 模式使用新增 Canvas 方式展示
  */
 /**
  * 页面尺寸信息
@@ -26,28 +44,45 @@ export interface PageBox {
     /** 页面高度（像素） */
     h: number;
 }
+/** 页面解析内容 */
+export interface PageContent {
+    json: any;
+    xml: string;
+    stamp?: any[];
+    annotation?: any[];
+}
 /**
  * 页面对象
  */
 export interface Page {
-    [pageId: string]: any;
+    [pageId: string]: PageContent;
 }
+/** 字体资源映射 {fontID: fontName} */
+export type FontResObj = Record<string, string>;
+/** 绘制参数资源映射 */
+export type DrawParamResObj = Record<string, any>;
+/** 多媒体资源映射 */
+export type MultiMediaResObj = Record<string, any>;
 /**
  * 文档对象
  */
 export interface OFDDocument {
+    /** 文档 ID */
+    doc: string;
     /** 页面数组 */
     pages: Page[];
-    /** 文档信息 */
-    document: DocumentInfo;
+    /** 文档主结构（XML JSON） */
+    document: any;
     /** 模板资源 */
-    tpls: any;
+    tpls: Record<string, any>;
     /** 字体资源对象 */
-    fontResObj: Record<string, any>;
+    fontResObj: FontResObj;
     /** 绘制参数资源对象 */
-    drawParamResObj: Record<string, any>;
+    drawParamResObj: DrawParamResObj;
     /** 多媒体资源对象 */
-    multiMediaResObj: Record<string, any>;
+    multiMediaResObj: MultiMediaResObj;
+    /** 签章注释 */
+    stampAnnot: Record<string, any[]>;
 }
 /**
  * 文档信息
@@ -101,22 +136,22 @@ export declare function parseOfdDocument(options: ParseOptions): void;
  * @param ofd - 解析后的 OFD 文档对象
  * @returns DIV 元素数组，每个元素对应一个页面
  */
-export declare const renderOfd: (screenWidth: number, ofd: OFDDocument) => HTMLElement[];
+export declare function renderOfd(screenWidth: number, ofd: OFDDocument): HTMLElement[];
 /**
  * 使用预配置的全局缩放渲染 OFD 文档
  *
  * @param ofd - 解析后的 OFD 文档对象
  * @returns DIV 元素数组，每个元素对应一个页面
  */
-export declare const renderOfdByScale: (ofd: OFDDocument) => HTMLElement[];
+export declare function renderOfdByScale(ofd: OFDDocument): HTMLElement[];
 /**
  * 设置页面缩放值
  * @param scale - 缩放倍数
  */
-export declare const setPageScale: (scale: number) => void;
+export declare function setPageScale(scale: number): void;
 /**
  * 获取当前页面缩放值
  * @returns 当前缩放倍数
  */
-export declare const getPageScale: () => number;
+export declare function getPageScale(): number;
 export { };

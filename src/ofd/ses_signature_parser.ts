@@ -14,8 +14,27 @@
 
 import { Hex, Base64, ASN1 } from "./asn1_util";
 import { SES_Signature_Verify, digestByteArray } from "./verify_signature_util";
+import type { SES_Signature } from "./verify_signature_util";
 
 let reHex = /^\s*(?:[0-9A-Fa-f][0-9A-Fa-f]\s*)+$/;
+
+/** SES 签章解码结果 */
+export interface DecodedSeal {
+  ofdArray: Uint8Array | null;
+  type: string | null;
+  SES_Signature: SES_Signature;
+  verifyRet: boolean;
+}
+
+/** X.509 证书解码结果 */
+interface DecodedCert {
+  subject: Map<string, string>;
+  commonName?: string;
+  subjectPublicKeyInfo: {
+    algorithm?: string;
+    subjectPublicKey: string;
+  };
+}
 
 /**
  * 从 ZIP 文件中解析 SES 签名数据
@@ -23,7 +42,7 @@ let reHex = /^\s*(?:[0-9A-Fa-f][0-9A-Fa-f]\s*)+$/;
  * @param name - 签章文件名
  * @returns 解析后的签章对象
  */
-export async function parseSesSignature(zip: any, name: string): Promise<any> {
+export async function parseSesSignature(zip: any, name: string): Promise<DecodedSeal> {
   return new Promise((resolve, reject) => {
     zip.files[name].async('base64').then(function (bytes: string) {
       let res = decodeText(bytes);
@@ -53,14 +72,14 @@ export function digestCheckProcess(arr: Array<{ fileData: Uint8Array; hashed: st
  * @param val - Base64 或 Hex 编码的签名数据
  * @returns 解码后的签章对象
  */
-function decodeText(val: string): any {
+function decodeText(val: string): DecodedSeal {
   try {
     let der = reHex.test(val) ? Hex.decode(val) : Base64.unarmor(val);
     let res = decode(der);
     return res;
   } catch (e) {
     console.log(e);
-    return {};
+    return { ofdArray: null, type: null, SES_Signature: {} as any, verifyRet: false };
   }
 }
 
@@ -70,7 +89,7 @@ function decodeText(val: string): any {
  * @param offset - 偏移量
  * @returns 解码后的签章对象
  */
-function decode(der: Uint8Array, offset?: number): any {
+function decode(der: Uint8Array, offset?: number): DecodedSeal {
   offset = offset || 0;
   try {
     const SES_Signature = decodeSES_Signature(der, offset);
@@ -94,7 +113,7 @@ function decode(der: Uint8Array, offset?: number): any {
     };
   } catch (_e) {
     console.log(_e);
-    return {};
+    return { ofdArray: null, type: null, SES_Signature: {} as any, verifyRet: false };
   }
 }
 
@@ -146,10 +165,10 @@ function decodeUTCTime(str: string): string {
  * @param offset - 偏移量
  * @returns SES 签名对象
  */
-function decodeSES_Signature(der: Uint8Array, offset?: number): any {
+function decodeSES_Signature(der: Uint8Array, offset?: number): SES_Signature {
   offset = offset || 0;
   let asn1 = ASN1.decode(der, offset);
-  var SES_Signature: any;
+  var SES_Signature: SES_Signature;
 
   // 检测是否为 CMS ContentInfo 格式 (顶层 SEQUENCE 的第一个子元素是 OID)
   const asn1Any: any = asn1;
@@ -415,7 +434,7 @@ function decodeSES_Signature(der: Uint8Array, offset?: number): any {
       };
     } catch (e2) {
       console.log(e2);
-      SES_Signature = {};
+      SES_Signature = { realVersion: 0, toSignDer: new Uint8Array(0), signature: '' };
     }
   }
   return SES_Signature;
@@ -451,7 +470,7 @@ function decodeSES_Signature(der: Uint8Array, offset?: number): any {
  * @param cmsAsn1 - 已解码的 CMS ContentInfo ASN.1 节点
  * @returns SES 签名对象（不含 eseal 数据）
  */
-function decodeCMS_Signature(cmsAsn1: any): any {
+function decodeCMS_Signature(cmsAsn1: any): SES_Signature {
   const signedData = cmsAsn1.sub[1].sub[0]; // [0] → SEQUENCE (SignedData)
   // signedData structure:
   // 0: version INTEGER
@@ -558,7 +577,7 @@ function Uint8ArrayToString(fileData: any): string {
  * @param asn1 - ASN.1 证书结构
  * @returns 解码后的证书对象
  */
-function decodeCert(asn1: any): any {
+function decodeCert(asn1: any): DecodedCert {
   try {
     const asn1Subject = asn1.sub[0].sub[0].sub[5];
     let subject = new Map();
@@ -585,7 +604,7 @@ function decodeCert(asn1: any): any {
     };
   } catch (e) {
     console.log("decodeCert fail:",e);
-    return {};
+    return { subject: new Map(), subjectPublicKeyInfo: { subjectPublicKey: '' } };
   }
 }
 

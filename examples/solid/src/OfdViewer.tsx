@@ -1,6 +1,6 @@
 import { createSignal, createEffect, createResource } from 'solid-js';
-import { parseOfdDocument, renderOfd } from '../../../src/index';
-import type { OFDDocument } from '../../../src/index';
+import { parseOfdDocument, renderOfd } from '../../../src/ofd/ofd';
+import type { OFDDocument } from '../../../src/ofd/ofd';
 // import { parseOfdDocument, renderOfd } from '@ycsx/ofdjs';
 // import type { OFDDocument } from '@ycsx/ofdjs';
 // import { parseOfdDocument, renderOfd } from '../../../dist/ofd';
@@ -104,7 +104,7 @@ export default function OfdViewer() {
 
           const screenWidth = container.clientWidth || 1024;
           const pageElements = renderOfd(screenWidth, ofdDocs[0]);
-          console.log(JSON.stringify(ofdDocs[0], null, 2));
+          // console.log(JSON.stringify(ofdDocs[0], null, 2));
 
           setFileInfo({
             name: name,

@@ -27,12 +27,14 @@ import {
   parseColor,
   parseCtm,
   parseStBox,
-  setPageScal,
+  setPageScale,
   converterBox,
   setMaxPageScal,
   ST_Box,
   PathPoint,
 } from "./ofd_util";
+import type { FontResObj, DrawParamResObj, MultiMediaResObj, Page } from "./ofd";
+import type { SES_Signature } from "./verify_signature_util";
 
 /**
  * 计算页面盒子列表
@@ -41,14 +43,14 @@ import {
  * @param document - 文档对象
  * @returns 页面盒子数组
  */
-export const renderPageBox = function (screenWidth: number, pages: any[], document: any): Array<{ id: string; box: ST_Box }> {
+export function renderPageBox(screenWidth: number, pages: Page[], document: any): Array<{ id: string; box: ST_Box }> {
   let pageBoxs: Array<{ id: string; box: ST_Box }> = [];
   for (const page of pages) {
     let boxObj = { id: Object.keys(page)[0], box: calPageBox(screenWidth, document, page) };
     pageBoxs.push(boxObj);
   }
   return pageBoxs;
-};
+}
 
 /**
  * 从页面文档中提取最合适的区域定义
@@ -74,17 +76,17 @@ function getPageBox(page: any, document: any): string | null {
  * @param page - 页面对象
  * @returns 转换后的 Box
  */
-export const calPageBox = function (screenWidth: number, document: any, page: any): ST_Box {
+export function calPageBox(screenWidth: number, document: any, page: any): ST_Box {
   const boxStr = getPageBox(page, document);
   if (!boxStr) return { x: 0, y: 0, w: 0, h: 0 };
   let array = boxStr.split(' ');
   const scale = ((screenWidth - 10) / parseFloat(array[2])).toFixed(1);
   setMaxPageScal(parseFloat(scale));
-  setPageScal(parseFloat(scale));
+  setPageScale(parseFloat(scale));
   let box = parseStBox(boxStr);
   if (!box) return { x: 0, y: 0, w: 0, h: 0 };
   return converterBox(box);
-};
+}
 
 /**
  * 用现有缩放计算页面盒子
@@ -92,21 +94,21 @@ export const calPageBox = function (screenWidth: number, document: any, page: an
  * @param page - 页面对象
  * @returns 转换后的 Box
  */
-export const calPageBoxScale = function (document: any, page: any): ST_Box {
+export function calPageBoxScale(document: any, page: any): ST_Box {
   const boxStr = getPageBox(page, document);
   if (!boxStr) return { x: 0, y: 0, w: 0, h: 0 };
   let box = parseStBox(boxStr);
   if (!box) return { x: 0, y: 0, w: 0, h: 0 };
   return converterBox(box);
-};
+}
 
 /**
  * 渲染映射页：根据模板 ID 渲染模板页上的所有图层
  * GB/T 33190-2016 第 10.2 节
  */
-const renderLayerFromTemplate = function (
+function renderLayerFromTemplate(
   tpls: Record<string, any>, template: any, pageDiv: HTMLElement,
-  fontResObj: any, drawParamResObj: any, multiMediaResObj: any
+  fontResObj: FontResObj, drawParamResObj: DrawParamResObj, multiMediaResObj: MultiMediaResObj
 ): void {
   let layers: any[] = [].concat(tpls[template['@_TemplateID']]?.['json']?.['ofd:Content']?.['ofd:Layer'] || []);
   for (let layer of layers) {
@@ -114,7 +116,7 @@ const renderLayerFromTemplate = function (
       renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, false);
     }
   }
-};
+}
 
 /**
  * 渲染单个页面到指定 DIV 元素
@@ -126,9 +128,9 @@ const renderLayerFromTemplate = function (
  * @param drawParamResObj - 绘制参数
  * @param multiMediaResObj - 多媒体资源
  */
-export const renderPage = function (
+export function renderPage(
   pageDiv: HTMLElement, page: any, tpls: any,
-  fontResObj: any, drawParamResObj: any, multiMediaResObj: any
+  fontResObj: FontResObj, drawParamResObj: DrawParamResObj, multiMediaResObj: MultiMediaResObj
 ): void {
   const pageId = Object.keys(page)[0];
   const template = page[pageId]?.['json']?.['ofd:Template'];
@@ -179,15 +181,15 @@ export const renderPage = function (
       renderAnnotation(pageDiv, annotation, fontResObj, drawParamResObj, multiMediaResObj);
     }
   }
-};
+}
 
 /**
  * 渲染注释
  * GB/T 33190-2016 第 9.2 节
  */
-const renderAnnotation = function (
+function renderAnnotation(
   pageDiv: HTMLElement, annotation: any,
-  fontResObj: any, drawParamResObj: any, multiMediaResObj: any
+  fontResObj: FontResObj, drawParamResObj: DrawParamResObj, multiMediaResObj: MultiMediaResObj
 ): void {
   let div = document.createElement('div');
   let boundary = annotation['appearance']?.['@_Boundary'];
@@ -201,15 +203,15 @@ const renderAnnotation = function (
   const contentLayer = annotation['appearance'];
   renderLayer(div, fontResObj, drawParamResObj, multiMediaResObj, contentLayer, false);
   pageDiv.appendChild(div);
-};
+}
 
 /**
  * 渲染签章页面
  */
-const renderSealPage = function (
+function renderSealPage(
   pageDiv: HTMLElement, docObj: any, pages: any[], tpls: any,
   isStampAnnot: boolean, stampAnnot: any, fontResObj: any,
-  drawParamResObj: any, multiMediaResObj: any, SES_Signature: any, signedInfo: any
+  drawParamResObj: any, multiMediaResObj: any, SES_Signature: SES_Signature, signedInfo: any
 ): void {
   for (const page of pages) {
     const pageId = Object.keys(page)[0];
@@ -251,13 +253,13 @@ const renderSealPage = function (
     div.appendChild(contentWrapper);
     pageDiv.appendChild(div);
   }
-};
+}
 
 /**
  * 收集图层中指定类型的所有对象（递归遍历嵌套 PageBlock）
  * 支持无限嵌套的 PageBlock 结构
  */
-const collectLayerObjects = function (layer: any, key: string): any[] {
+function collectLayerObjects(layer: any, key: string): any[] {
   const objects: any[] = [];
   for (const item of [].concat(layer?.[key] || [])) {
     if (item) objects.push(item);
@@ -271,7 +273,7 @@ const collectLayerObjects = function (layer: any, key: string): any[] {
     }
   }
   return objects;
-};
+}
 
 /**
  * 渲染单个图层
@@ -282,7 +284,7 @@ const collectLayerObjects = function (layer: any, key: string): any[] {
  * @param layer - 图层对象
  * @param isStampAnnot - 是否是签署注释
  */
-const renderLayer = function (
+function renderLayer(
   pageDiv: HTMLElement, fontResObj: any, drawParamResObj: any,
   multiMediaResObj: any, layer: any, isStampAnnot: boolean
 ): void {
@@ -328,14 +330,14 @@ const renderLayer = function (
     fragment.appendChild(svg);
   }
   pageDiv.appendChild(fragment);
-};
+}
 
 // ============ 文本渲染 ============
 
 /**
  * 创建 SVG 文本元素
  */
-const createSvgTextElement = function (
+function createSvgTextElement(
   textCodePoint: { x: number; y: number; text: string },
   textObject: any, style: string, fillColor: string | null,
   fillOpacity: number, ctm: string | null, hScale: string | null
@@ -359,14 +361,14 @@ const createSvgTextElement = function (
   text.setAttribute('style', style);
   text.setAttribute('data-oid', textObject['@_ID']);
   return text;
-};
+}
 
 // ============ 图像渲染 ============
 
 /**
  * 获取图像边界（支持 CTM 变换）
  */
-const getImageBoundary = function (imageObject: any): ST_Box {
+function getImageBoundary(imageObject: any): ST_Box {
   const boundary = parseStBox(imageObject['@_Boundary']);
   const ctm = imageObject['@_CTM'];
   if (ctm && boundary && boundary.x === 0 && boundary.y === 0) {
@@ -379,13 +381,13 @@ const getImageBoundary = function (imageObject: any): ST_Box {
     };
   }
   return boundary ? converterBox(boundary) : { x: 0, y: 0, w: 0, h: 0 };
-};
+}
 
 /**
  * 渲染图像对象
  * JBIG2 图像使用 Canvas 渲染，其他使用 <img> 标签
  */
-export const renderImageObject = function (
+export function renderImageObject(
   pageWidth: string, pageHeight: string,
   multiMediaResObj: any, imageObject: any
 ): HTMLElement | null {
@@ -402,12 +404,12 @@ export const renderImageObject = function (
   } else {
     return renderImageOnDiv(pageWidth, pageHeight, media.img, boundary, null, false, null, null, zIndex);
   }
-};
+}
 
 /**
  * 使用 Canvas 渲染二值图像（JBIG2）
  */
-const renderImageOnCanvas = function (
+function renderImageOnCanvas(
   img: Uint8ClampedArray, imgWidth: number, imgHeight: number,
   boundary: ST_Box, oid: number
 ): HTMLCanvasElement {
@@ -438,15 +440,15 @@ const renderImageOnCanvas = function (
      width:${boundary.w}px;height:${boundary.h}px;z-index:${oid};
      image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;`);
   return canvas;
-};
+}
 
 /**
  * 使用 DIV + <img> 渲染常规图像
  */
-export const renderImageOnDiv = function (
+export function renderImageOnDiv(
   pageWidth: string, pageHeight: string, imgSrc: string,
   boundary: ST_Box, clip: ST_Box | null,
-  isStampAnnot: boolean, SES_Signature: any, signedInfo: any, oid: number
+  isStampAnnot: boolean, SES_Signature: SES_Signature, signedInfo: any, oid: number
 ): HTMLDivElement {
   let div = document.createElement('div');
   if (isStampAnnot) {
@@ -496,7 +498,7 @@ export const renderImageOnDiv = function (
      top: ${c ? boundary.y : boundary.y < 0 ? 0 : boundary.y}px;
      width: ${w}px; height: ${h}px; ${c};z-index: ${oid};`);
   return div;
-};
+}
 
 // ============ 文本对象渲染 ============
 
@@ -504,7 +506,7 @@ export const renderImageOnDiv = function (
  * 渲染 SVG 文本对象
  * GB/T 33190-2016 第 7.4.4 节 文本对象
  */
-export const renderTextObject = function (
+export function renderTextObject(
   fontResObj: any, textObject: any, defaultFillColor: string | null
 ): SVGSVGElement {
   let defaultFillOpacity = 1;
@@ -545,54 +547,54 @@ export const renderTextObject = function (
     `overflow:visible;position:absolute;width:${width}px;height:${height}px;
      left:${left}px;top:${top}px;z-index:${textObject['pfIndex']}`);
   return svg;
-};
+}
 
 // ============ 路径对象渲染 ============
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-const getDrawParam = function (drawParamResObj: any, drawParam: string): any {
+function getDrawParam(drawParamResObj: any, drawParam: string): any {
   let obj = drawParamResObj?.[drawParam];
   if (obj?.relative) {
     obj = drawParamResObj?.[obj.relative] || obj;
   }
   return obj;
-};
+}
 
-const getDrawParamColor = function (drawParamResObj: any, drawParam: string, colorKey: string): string | null {
+function getDrawParamColor(drawParamResObj: any, drawParam: string, colorKey: string): string | null {
   const color = getDrawParam(drawParamResObj, drawParam)?.[colorKey];
   return color ? parseColor(color) : null;
-};
+}
 
-const parseAlpha = function (alpha: string | undefined): number {
+function parseAlpha(alpha: string | undefined): number {
   if (alpha === undefined || alpha === null || alpha === '') return 1;
   const value = parseFloat(alpha);
   if (isNaN(value)) return 1;
   return value > 1 ? value / 255 : value;
-};
+}
 
-const getColorAlpha = function (colorObject: any): number {
+function getColorAlpha(colorObject: any): number {
   return parseAlpha(colorObject?.['@_Alpha']);
-};
+}
 
-const getCanvasLineCap = function (lineCap: string | undefined): CanvasLineCap {
+function getCanvasLineCap(lineCap: string | undefined): CanvasLineCap {
   if (lineCap === 'Butt') return 'butt';
   if (lineCap === 'Round') return 'round';
   if (lineCap === 'Square') return 'square';
   return 'butt';
-};
+}
 
-const getCanvasLineJoin = function (join: string | undefined): CanvasLineJoin {
+function getCanvasLineJoin(join: string | undefined): CanvasLineJoin {
   if (join === 'Round') return 'round';
   if (join === 'Bevel') return 'bevel';
   return 'miter';
-};
+}
 
-const getCanvasFillRule = function (rule: string | undefined): CanvasFillRule {
+function getCanvasFillRule(rule: string | undefined): CanvasFillRule {
   return rule === 'Even-Odd' || rule === 'evenodd' ? 'evenodd' : 'nonzero';
-};
+}
 
-const getPathD = function (points: PathPoint[]): string {
+function getPathD(points: PathPoint[]): string {
   let d = '';
   for (const point of points) {
     if (point.type === 'M') d += `M${point.x} ${point.y} `;
@@ -602,9 +604,9 @@ const getPathD = function (points: PathPoint[]): string {
     else if (point.type === 'C') d += `Z`;
   }
   return d;
-};
+}
 
-const getPathRenderStyle = function (
+function getPathRenderStyle(
   drawParamResObj: any, pathObject: any,
   defaultFillColor: string | null, defaultStrokeColor: string | null,
   defaultLineWith: number
@@ -654,9 +656,9 @@ const getPathRenderStyle = function (
     miterLimit: miterLimit ? parseFloat(miterLimit) : 10,
     fillRule: getCanvasFillRule(pathObject['@_Rule']),
   };
-};
+}
 
-const drawPathPoints = function (context: CanvasRenderingContext2D, points: PathPoint[]): void {
+function drawPathPoints(context: CanvasRenderingContext2D, points: PathPoint[]): void {
   context.beginPath();
   for (const point of points) {
     if (point.type === 'M') context.moveTo(point.x!, point.y!);
@@ -665,13 +667,13 @@ const drawPathPoints = function (context: CanvasRenderingContext2D, points: Path
     else if (point.type === 'B') context.bezierCurveTo(point.x1!, point.y1!, point.x2!, point.y2!, point.x3!, point.y3!);
     else if (point.type === 'C') context.closePath();
   }
-};
+}
 
 /**
  * 在 Canvas 上渲染路径对象列表
  * 支持 SVG Path 的 A (AbbreviatedData) 指令
  */
-export const renderPathObjectsOnCanvas = function (
+export function renderPathObjectsOnCanvas(
   pageDiv: HTMLElement, drawParamResObj: any, pathObjects: any[],
   defaultFillColor: string | null, defaultStrokeColor: string | null,
   defaultLineWith: number, isStampAnnot: boolean
@@ -733,12 +735,12 @@ export const renderPathObjectsOnCanvas = function (
     context.restore();
   }
   return canvas;
-};
+}
 
 /**
  * 渲染单个路径对象（SVG 方式，用于电子签章场景）
  */
-export const renderPathObject = function (
+export function renderPathObject(
   drawParamResObj: any, pathObject: any,
   defaultFillColor: string | null, defaultStrokeColor: string | null,
   defaultLineWith: number, isStampAnnot: boolean
@@ -773,4 +775,4 @@ export const renderPathObject = function (
     `overflow:visible;position:absolute;width:${width}px;height:${height}px;
      left:${boundary.x}px;top:${boundary.y}px;z-index:${pathObject['pfIndex']}`);
   return svg;
-};
+}

@@ -17,6 +17,30 @@ import { sha1, md5, rsaVerifySHA1 } from "./crypto_util";
 import { Uint8ArrayToHexString } from "./ofd_util";
 import { Base64 } from "./asn1_util";
 
+/** X.509 证书公钥信息 */
+interface SubjectPublicKeyInfo {
+  algorithm?: string;
+  subjectPublicKey: string;
+}
+
+/** X.509 证书 */
+interface Cert {
+  subject?: Map<string, string>;
+  commonName?: string;
+  subjectPublicKeyInfo: SubjectPublicKeyInfo;
+}
+
+/** SES 签名结构（支持 V1/V4/CMS） */
+export interface SES_Signature {
+  realVersion: number;
+  toSignDer: Uint8Array;
+  signature: string;
+  signatureAlgID?: string;
+  cert?: Cert;
+  toSign?: Record<string, any>;
+  timpStamp?: string;
+}
+
 /**
  * 摘要计算并对比验证结果
  *
@@ -59,7 +83,7 @@ export function digestByteArray(
  * @param SES_Signature - SES 签名数据结构
  * @returns true 验证通过, false 验证失败
  */
-export function SES_Signature_Verify(SES_Signature: any): boolean {
+export function SES_Signature_Verify(SES_Signature: SES_Signature): boolean {
   try {
     let signAlg = SES_Signature.realVersion < 4
       ? SES_Signature.toSign.signatureAlgorithm

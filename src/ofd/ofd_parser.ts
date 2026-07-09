@@ -17,18 +17,20 @@ import { XMLParser } from 'fast-xml-parser';
 import JsZip from "jszip";
 import { parseStBox, getExtensionByPath, replaceFirstSlash } from "./ofd_util";
 import { Jbig2Image } from '../jbig2/jbig2';
-import { parseSesSignature } from "./ses_signature_parser";
+import { parseSesSignature, digestCheckProcess } from "./ses_signature_parser";
+import type { DecodedSeal } from "./ses_signature_parser";
+import type { OFDDocument, Page } from "./ofd";
 
 /**
  * 执行 OFD 解析三步流水线：解压 -> 获取文档根 -> 解析文档
  * @param file - OFD 文件二进制数据（ArrayBuffer 或 File 对象）
  * @returns 解析完成的文档数组
  */
-export const parseOfdSteps = async function (file: ArrayBuffer | File): Promise<any> {
+export async function parseOfdSteps(file: ArrayBuffer | File): Promise<OFDDocument[]> {
   const zip = await unzipOfd(file);
   const docRoot = await getDocRoots(zip);
   return await parseSingleDoc(docRoot);
-};
+}
 
 /**
  * 使用 JSZip 解压 OFD 文件
@@ -36,7 +38,7 @@ export const parseOfdSteps = async function (file: ArrayBuffer | File): Promise<
  * @param file - OFD 文件数据
  * @returns JSZip 实例
  */
-export const unzipOfd = function (file: ArrayBuffer | File): Promise<any> {
+export function unzipOfd(file: ArrayBuffer | File): Promise<any> {
   return new Promise((resolve, reject) => {
     JsZip.loadAsync(file)
       .then(function (zip) {
@@ -45,7 +47,7 @@ export const unzipOfd = function (file: ArrayBuffer | File): Promise<any> {
         reject(e);
       });
   });
-};
+}
 
 /**
  * 从 OFD.xml 获取文档根信息
@@ -53,20 +55,20 @@ export const unzipOfd = function (file: ArrayBuffer | File): Promise<any> {
  * @param zip - JSZip 实例
  * @returns [zip, docbodies] - ZIP 实例和文档根数组
  */
-export const getDocRoots = async function (zip: any): Promise<[any, any[]]> {
+export async function getDocRoots(zip: any): Promise<[any, any[]]> {
   const data = await getJsonFromXmlContent(zip, 'OFD.xml');
   const docbodys = data['json']['ofd:OFD']['ofd:DocBody'];
   let array: any[] = [];
   array = array.concat(docbodys);
   return [zip, array];
-};
+}
 
 /**
  * 解析单个文档，按顺序执行所有解析步骤
  * @param [zip, array] - ZIP 实例和文档根数组
  * @returns 解析完成的文档列表
  */
-export const parseSingleDoc = async function ([zip, array]: [any, any[]]): Promise<any[]> {
+export async function parseSingleDoc([zip, array]: [any, any[]]): Promise<OFDDocument[]> {
   let docs: any[] = [];
   for (let docbody of array) {
     if (docbody) {
@@ -80,7 +82,7 @@ export const parseSingleDoc = async function ([zip, array]: [any, any[]]): Promi
     }
   }
   return docs;
-};
+}
 
 /**
  * 获取文档根路径并处理签名信息
@@ -88,10 +90,15 @@ export const parseSingleDoc = async function ([zip, array]: [any, any[]]): Promi
  * @param docbody - 文档根对象
  * @returns [zip, doc, docRoot, stampAnnotArray]
  */
-export const doGetDocRoot = async function (zip: any, docbody: any): Promise<[any, string, string, any]> {
+export async function doGetDocRoot(zip: any, docbody: any): Promise<[any, string, string, any]> {
   let docRoot = docbody['ofd:DocRoot'];
+  // fast-xml-parser with parseNodeValue: false returns { '#text': '...' } for text nodes
+  if (typeof docRoot === 'object' && docRoot['#text']) {
+    docRoot = docRoot['#text'];
+  }
   docRoot = replaceFirstSlash(docRoot);
-  const doc = docRoot.split('/')[0];
+  const lastSlash = docRoot.lastIndexOf('/');
+  const doc = lastSlash >= 0 ? docRoot.substring(0, lastSlash) : '';
   const signatures = docbody['ofd:Signatures'];
   const stampAnnot = await getSignature(zip, signatures, doc);
   let stampAnnotArray: Record<string, any[]> = {};
@@ -110,7 +117,7 @@ export const doGetDocRoot = async function (zip: any, docbody: any): Promise<[an
         }
       } else if (stamp.sealObj.type === 'png') {
         // 印章图片是 PNG 格式
-        let img = 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, stamp.sealObj.ofdArray as number[]));
+        let img = 'data:image/png;base64,' + btoa(String.fromCharCode(...stamp.sealObj.ofdArray!));
         let stampArray: any[] = [];
         stampArray = stampArray.concat(stamp.stampAnnot);
         for (const annot of stampArray) {
@@ -131,7 +138,7 @@ export const doGetDocRoot = async function (zip: any, docbody: any): Promise<[an
     }
   }
   return [zip, doc, docRoot, stampAnnotArray];
-};
+}
 
 /**
  * 解析 Document.xml 获取文档主结构
@@ -139,7 +146,7 @@ export const doGetDocRoot = async function (zip: any, docbody: any): Promise<[an
  * @param args - [zip, doc, docRoot, stampAnnot]
  * @returns [zip, doc, documentObj, stampAnnot, annotationObjs]
  */
-export const getDocument = async function ([zip, doc, docRoot, stampAnnot]: [any, string, string, any]): Promise<[any, string, any, any, any]> {
+export async function getDocument([zip, doc, docRoot, stampAnnot]: [any, string, string, any]): Promise<[any, string, any, any, any]> {
   const data = await getJsonFromXmlContent(zip, docRoot);
   const documentObj = data['json']['ofd:Document'];
   let annotations = documentObj['ofd:Annotations'];
@@ -159,7 +166,7 @@ export const getDocument = async function ([zip, doc, docRoot, stampAnnot]: [any
   }
   const annotationObjs = await getAnnotations(annoBase, array, doc, zip);
   return [zip, doc, documentObj, stampAnnot, annotationObjs];
-};
+}
 
 /**
  * 解析注释信息
@@ -170,7 +177,7 @@ export const getDocument = async function ([zip, doc, docRoot, stampAnnot]: [any
  * @param zip - JSZip 实例
  * @returns 注释对象映射
  */
-const getAnnotations = async function (annoBase: string | undefined, annotations: any[], doc: string, zip: any): Promise<any> {
+async function getAnnotations(annoBase: string | undefined, annotations: any[], doc: string, zip: any): Promise<Record<string, any[]>> {
   let annotationObjs: Record<string, any[]> = {};
   for (let anno of annotations) {
     if (!anno) continue;
@@ -201,7 +208,7 @@ const getAnnotations = async function (annoBase: string | undefined, annotations
     }
   }
   return annotationObjs;
-};
+}
 
 /**
  * 解析文档资源（DocumentRes）
@@ -210,7 +217,7 @@ const getAnnotations = async function (annoBase: string | undefined, annotations
  * @param args - [zip, doc, Document, stampAnnot, annotationObjs]
  * @returns 包含资源对象的元组
  */
-export const getDocumentRes = async function ([zip, doc, Document, stampAnnot, annotationObjs]: [any, string, any, any, any]): Promise<[any, string, any, any, any, any, any, any]> {
+export async function getDocumentRes([zip, doc, Document, stampAnnot, annotationObjs]: [any, string, any, any, any]): Promise<[any, string, any, any, any, any, any, any]> {
   let documentResPath = Document['ofd:CommonData']['ofd:DocumentRes'];
   let fontResObj: Record<string, string> = {};
   let drawParamResObj: Record<string, any> = {};
@@ -228,14 +235,14 @@ export const getDocumentRes = async function ([zip, doc, Document, stampAnnot, a
     }
   }
   return [zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj];
-};
+}
 
 /**
  * 解析公共资源（PublicRes）
  * @param args - 包含文档资源和状态
  * @returns 合并后的资源对象
  */
-export const getPublicRes = async function ([zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj]: [any, string, any, any, any, any, any, any]): Promise<[any, string, any, any, any, any, any, any]> {
+export async function getPublicRes([zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj]: [any, string, any, any, any, any, any, any]): Promise<[any, string, any, any, any, any, any, any]> {
   let publicResPath = Document['ofd:CommonData']['ofd:PublicRes'];
   if (publicResPath) {
     if (publicResPath.indexOf(doc) == -1) {
@@ -253,7 +260,7 @@ export const getPublicRes = async function ([zip, doc, Document, stampAnnot, ann
     }
   }
   return [zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj];
-};
+}
 
 /**
  * 解析模板页
@@ -261,7 +268,7 @@ export const getPublicRes = async function ([zip, doc, Document, stampAnnot, ann
  * @param args - 包含文档资源和状态
  * @returns 包含模板页对象的元组
  */
-export const getTemplatePage = async function ([zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj]: [any, string, any, any, any, any, any, any]): Promise<[any, string, any, any, any, any, any, any, any]> {
+export async function getTemplatePage([zip, doc, Document, stampAnnot, annotationObjs, fontResObj, drawParamResObj, multiMediaResObj]: [any, string, any, any, any, any, any, any]): Promise<[any, string, any, any, any, any, any, any, any]> {
   let templatePages = Document['ofd:CommonData']['ofd:TemplatePage'];
   let array: any[] = [];
   array = array.concat(templatePages);
@@ -273,7 +280,7 @@ export const getTemplatePage = async function ([zip, doc, Document, stampAnnot, 
     }
   }
   return [zip, doc, Document, stampAnnot, annotationObjs, tpls, fontResObj, drawParamResObj, multiMediaResObj];
-};
+}
 
 /**
  * 解析内容页
@@ -281,7 +288,7 @@ export const getTemplatePage = async function ([zip, doc, Document, stampAnnot, 
  * @param args - 包含所有解析状态
  * @returns 文档对象
  */
-export const getPage = async function ([zip, doc, Document, stampAnnot, annotationObjs, tpls, fontResObj, drawParamResObj, multiMediaResObj]: [any, string, any, any, any, any, any, any, any]): Promise<any> {
+export async function getPage([zip, doc, Document, stampAnnot, annotationObjs, tpls, fontResObj, drawParamResObj, multiMediaResObj]: [any, string, any, any, any, any, any, any, any]): Promise<OFDDocument> {
   let pages = Document['ofd:Pages']['ofd:Page'];
   let array: any[] = [];
   array = array.concat(pages);
@@ -311,14 +318,14 @@ export const getPage = async function ([zip, doc, Document, stampAnnot, annotati
     drawParamResObj,
     multiMediaResObj,
   };
-};
+}
 
 /**
  * 解析字体资源
  * @param res - 资源对象
  * @returns 字体名称映射 {fontID: fontName}
  */
-const getFont = async function (res: any): Promise<Record<string, string>> {
+async function getFont(res: any): Promise<Record<string, string>> {
   const fonts = res['ofd:Fonts'];
   let fontResObj: Record<string, string> = {};
   if (fonts) {
@@ -331,7 +338,7 @@ const getFont = async function (res: any): Promise<Record<string, string>> {
     }
   }
   return fontResObj;
-};
+}
 
 /**
  * 解析绘制参数资源
@@ -339,7 +346,7 @@ const getFont = async function (res: any): Promise<Record<string, string>> {
  * @param res - 资源对象
  * @returns 绘制参数映射
  */
-const getDrawParam = async function (res: any): Promise<Record<string, any>> {
+async function getDrawParam(res: any): Promise<Record<string, any>> {
   const drawParams = res['ofd:DrawParams'];
   let drawParamResObj: Record<string, any> = {};
   if (drawParams) {
@@ -357,7 +364,7 @@ const getDrawParam = async function (res: any): Promise<Record<string, any>> {
     }
   }
   return drawParamResObj;
-};
+}
 
 /**
  * 解析多媒体资源（图像等）
@@ -367,7 +374,7 @@ const getDrawParam = async function (res: any): Promise<Record<string, any>> {
  * @param doc - 文档 ID
  * @returns 多媒体资源映射
  */
-const getMultiMediaRes = async function (zip: any, res: any, doc: string): Promise<Record<string, any>> {
+async function getMultiMediaRes(zip: any, res: any, doc: string): Promise<Record<string, any>> {
   const multiMedias = res['ofd:MultiMedias'];
   let multiMediaResObj: Record<string, any> = {};
   if (multiMedias) {
@@ -402,7 +409,7 @@ const getMultiMediaRes = async function (zip: any, res: any, doc: string): Promi
     }
   }
   return multiMediaResObj;
-};
+}
 
 /**
  * 解析单个页面
@@ -411,7 +418,7 @@ const getMultiMediaRes = async function (zip: any, res: any, doc: string): Promi
  * @param doc - 文档 ID
  * @returns 页面对象
  */
-const parsePage = async function (zip: any, obj: any, doc: string): Promise<any> {
+async function parsePage(zip: any, obj: any, doc: string): Promise<Page> {
   let pagePath = obj['@_BaseLoc'];
   if (pagePath.indexOf(doc) == -1) {
     pagePath = `${doc}/${pagePath}`;
@@ -420,7 +427,7 @@ const parsePage = async function (zip: any, obj: any, doc: string): Promise<any>
   let pageObj: Record<string, any> = {};
   pageObj[obj['@_ID']] = { 'json': data['json']['ofd:Page'], 'xml': data['xml'] };
   return pageObj;
-};
+}
 
 /**
  * 获取签名数据
@@ -430,7 +437,7 @@ const parsePage = async function (zip: any, obj: any, doc: string): Promise<any>
  * @param doc - 文档 ID
  * @returns 签名信息列表
  */
-const getSignature = async function (zip: any, signatures: string, doc: string): Promise<any[]> {
+async function getSignature(zip: any, signatures: string, doc: string): Promise<SignatureData[]> {
   let stampAnnot: any[] = [];
   if (signatures) {
     signatures = replaceFirstSlash(signatures);
@@ -459,7 +466,21 @@ const getSignature = async function (zip: any, signatures: string, doc: string):
     }
   }
   return stampAnnot;
-};
+}
+
+/** 签名详情数据 */
+interface SignatureData {
+  stampAnnot: any;
+  sealObj: DecodedSeal;
+  signedInfo: {
+    signatureID: string;
+    VerifyRet: boolean;
+    fileDigestVerified: boolean;
+    Provider: string;
+    SignatureMethod: string;
+    SignatureDateTime: string;
+  };
+}
 
 /**
  * 获取签名详情数据
@@ -468,7 +489,7 @@ const getSignature = async function (zip: any, signatures: string, doc: string):
  * @param signatureID - 签名 ID
  * @returns 签名详情
  */
-const getSignatureData = async function (zip: any, signature: string, signatureID: string): Promise<any> {
+async function getSignatureData(zip: any, signature: string, signatureID: string): Promise<SignatureData> {
   const data = await getJsonFromXmlContent(zip, signature);
   let signedValue = (data['json']['ofd:Signature']['ofd:SignedValue']);
   signedValue = signedValue.toString().replace('/', '');
@@ -477,7 +498,6 @@ const getSignatureData = async function (zip: any, signature: string, signatureI
   }
   let sealObj = await parseSesSignature(zip, signedValue);
   const checkMethod = data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:References']['@_CheckMethod'];
-  (globalThis as any).toBeChecked = new Map();
   let arr: Array<{ fileData: Uint8Array; hashed: string; checkMethod: string }> = [];
   const references = data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:References']['ofd:Reference'];
   const refArray: any[] = [].concat(references);
@@ -490,34 +510,40 @@ const getSignatureData = async function (zip: any, signature: string, signatureI
     const fileData = await getFileData(zip, key);
     arr.push({ fileData, hashed, checkMethod });
   }
-  (globalThis as any).toBeChecked.set(signatureID, arr);
+  const fileDigestVerified = digestCheckProcess(arr);
   return {
     'stampAnnot': data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:StampAnnot'],
     'sealObj': sealObj,
     'signedInfo': {
       'signatureID': signatureID,
       'VerifyRet': sealObj.verifyRet,
+      'fileDigestVerified': fileDigestVerified,
       'Provider': data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:Provider'],
       'SignatureMethod': data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:SignatureMethod'],
       'SignatureDateTime': data['json']['ofd:Signature']['ofd:SignedInfo']['ofd:SignatureDateTime'],
     },
   };
-};
+}
 
 /**
  * 从 ZIP 获取文件二进制数据
  */
-const getFileData = async function (zip: any, name: string): Promise<Uint8Array> {
-  return zip.files[name].async('uint8array');
-};
+async function getFileData(zip: any, name: string): Promise<Uint8Array | null> {
+  const entry = zip.files[name];
+  if (!entry) {
+    console.warn(`File not found in OFD: ${name}`);
+    return null;
+  }
+  return entry.async('uint8array');
+}
 
 /**
  * 递归解析印章文档（OFD 格式的印章）
  * 印章本身可能是 OFD 格式，需要递归解析
  */
-const getSealDocumentObj = async function (stampAnnot: any): Promise<any> {
+async function getSealDocumentObj(stampAnnot: any): Promise<OFDDocument[]> {
   return parseOfdSteps(stampAnnot.sealObj.ofdArray);
-};
+}
 
 /**
  * 从 ZIP 中读取 XML 并解析为 JSON
@@ -525,12 +551,18 @@ const getSealDocumentObj = async function (stampAnnot: any): Promise<any> {
  * @param xmlName - XML 文件路径
  * @returns 解析结果（包含原始 XML 和 JSON）
  */
-const getJsonFromXmlContent = async function (zip: any, xmlName: string): Promise<{ xml: string; json: any }> {
+async function getJsonFromXmlContent(zip: any, xmlName: string): Promise<{ xml: string; json: Record<string, any> }> {
   return new Promise((resolve, reject) => {
     if (xmlName === 'Doc_0/TPLS/Tpl_0/Content.xml') {
       xmlName = 'Doc_0/Tpls/Tpl_0/Content.xml';
     }
-    zip.files[xmlName].async('string').then(function (content: string) {
+    const fileEntry = zip.files[xmlName];
+    if (!fileEntry) {
+      console.warn(`XML file not found in OFD: ${xmlName}`);
+      resolve({ xml: '', json: { 'ofd:Page': {} } });
+      return;
+    }
+    fileEntry.async('string').then(function (content: string) {
       let ops = {
         attributeNamePrefix: "@_",
         ignoreAttributes: false,
@@ -545,7 +577,7 @@ const getJsonFromXmlContent = async function (zip: any, xmlName: string): Promis
       reject(e);
     });
   });
-};
+}
 
 /**
  * 从 ZIP 解析 JBIG2 格式图像
@@ -553,7 +585,7 @@ const getJsonFromXmlContent = async function (zip: any, xmlName: string): Promis
  * @param name - 文件名
  * @returns 解码后的图像数据
  */
-const parseJbig2ImageFromZip = async function (zip: any, name: string): Promise<{ img: any; width: number; height: number; format: string }> {
+async function parseJbig2ImageFromZip(zip: any, name: string): Promise<{ img: any; width: number; height: number; format: string }> {
   return new Promise((resolve, reject) => {
     if (!zip.files[name]) {
       console.warn(`JBIG2 image not found in OFD: ${name}`);
@@ -568,7 +600,7 @@ const parseJbig2ImageFromZip = async function (zip: any, name: string): Promise<
       reject(e);
     });
   });
-};
+}
 
 /**
  * 从 ZIP 解析其他格式图像
@@ -576,7 +608,7 @@ const parseJbig2ImageFromZip = async function (zip: any, name: string): Promise<
  * @param name - 文件名
  * @returns Base64 编码的图像数据
  */
-const parseOtherImageFromZip = async function (zip: any, name: string): Promise<string> {
+async function parseOtherImageFromZip(zip: any, name: string): Promise<string> {
   return new Promise((resolve, reject) => {
     if (name.startsWith('/')) {
       name = name.substring(1);
@@ -594,4 +626,4 @@ const parseOtherImageFromZip = async function (zip: any, name: string): Promise<
       reject(e);
     });
   });
-};
+}
