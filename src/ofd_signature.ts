@@ -12,9 +12,9 @@
  * 支持 SES V1 和 SES V4 两种版本格式。
  */
 
-import { Hex, Base64, ASN1 } from "./asn1_util";
-import { SES_Signature_Verify, digestByteArray } from "./verify_signature_util";
-import type { SES_Signature } from "./verify_signature_util";
+import { Hex, Base64, ASN1 } from "./utils/asn1_util";
+import { SES_Signature_Verify, digestByteArray } from "./utils/signature_util";
+import type { SES_Signature } from "./utils/signature_util";
 
 let reHex = /^\s*(?:[0-9A-Fa-f][0-9A-Fa-f]\s*)+$/;
 

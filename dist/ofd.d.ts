@@ -35,6 +35,7 @@
  *
  * 参照标准：GB/T 33190-2016
  */
+export { setPageScale, getPageScale } from "./ofd_util";
 /**
  * 页面尺寸信息
  */
@@ -144,14 +145,4 @@ export declare function renderOfd(screenWidth: number, ofd: OFDDocument): HTMLEl
  * @returns DIV 元素数组，每个元素对应一个页面
  */
 export declare function renderOfdByScale(ofd: OFDDocument): HTMLElement[];
-/**
- * 设置页面缩放值
- * @param scale - 缩放倍数
- */
-export declare function setPageScale(scale: number): void;
-/**
- * 获取当前页面缩放值
- * @returns 当前缩放倍数
- */
-export declare function getPageScale(): number;
 export { };

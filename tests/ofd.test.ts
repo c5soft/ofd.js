@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "bun:test";
-import { parseOfdDocument, getPageScale, setPageScale } from '../src/ofd/ofd';
+import { parseOfdDocument, getPageScale, setPageScale } from '../src/ofd';
 
 describe('OFD Module Basic Tests', () => {
   describe('Page Scale Functions', () => {

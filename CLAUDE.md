@@ -24,7 +24,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 入口与全局 Polyfill
 
-`src/ofd/ofd.ts` 是构建入口，同时也是公开 API 和 TypeScript 类型的定义源。模块顶部有一个关键 polyfill：
+`src/ofd.ts` 是构建入口，同时也是公开 API 和 TypeScript 类型的定义源。模块顶部有一个关键 polyfill：
 
 ```ts
 if (typeof window !== 'undefined' && typeof global === 'undefined') {
@@ -58,17 +58,16 @@ if (typeof window !== 'undefined' && typeof global === 'undefined') {
 
 ```text
 src/
-├── ofd/ofd.ts            # 构建入口 & 公共 API 定义（含全局 polyfill）
-├── ofd/                    # OFD 核心 (TypeScript)
-│   ├── ofd.ts              # 公共 API 定义和类型
-│   ├── ofd_parser.ts       # 解析流水线 (ZIP→XML→JSON→结构化文档)
-│   ├── ofd_render.ts       # 页面渲染 (Canvas 路径 + SVG 文本 + DOM 图像)
-│   ├── ofd_util.ts         # 几何计算、坐标转换、颜色解析、HTML 解码
-│   ├── asn1_util.ts        # 轻量级 ASN.1 DER 解码器（替代 @lapo/asn1js）
-│   ├── crypto_util.ts      # SHA1/MD5/RSA PKCS#1 v1.5 自实现（替代 js-md5/js-sha1/jsrsasign）
-│   ├── ses_signature_parser.ts  # SES 电子印章 ASN.1 解析
-│   └── verify_signature_util.ts # SM2/RSA 签名验证 + SM3/MD5/SHA1 摘要 (SM3 from sm-crypto)
-└── jbig2/                  # JBIG2 图像解码 (TypeScript)
+├── ofd.ts                 # 构建入口 & 公共 API 定义（含全局 polyfill）
+├── ofd_parser.ts          # 解析流水线 (ZIP→XML→JSON→结构化文档)
+├── ofd_render.ts          # 页面渲染 (Canvas 路径 + SVG 文本 + DOM 图像)
+├── ofd_signature.ts    # SES 电子印章 ASN.1 解析
+├── utils/                 # 工具函数
+│   ├── ofd_util.ts        #   几何计算、坐标转换、颜色解析、HTML 解码
+│   ├── asn1_util.ts       #   轻量级 ASN.1 DER 解码器
+│   ├── crypto_util.ts     #   SHA1/MD5/RSA PKCS#1 v1.5 自实现
+│   └── signature_util.ts # SM2/RSA 签名验证 + SM3/MD5/SHA1 摘要
+└── jbig2/                 # JBIG2 图像解码 (TypeScript)
     ├── jbig2.ts            # 主解码器 (ISO/IEC 14492)
     ├── arithmetic_decoder.ts # QM coder 算术解码
     ├── ccitt.ts            # CCITT 传真编码/解码
@@ -101,7 +100,7 @@ dist/                       # 构建输出
    - `getDocumentRes` / `getPublicRes` → 加载资源（字体、绘制参数、多媒体）
    - `getTemplatePage` → 解析模板页
    - `getPage` → 解析内容页对象（文本/路径/图像）
-5. 签名处理 → 解析 SES 印章，调用 `verify_signature_util.ts` 进行 SM2/SM3 验证
+5. 签名处理 → 解析 SES 印章，调用 `signature_util.ts` 进行 SM2/SM3 验证
 
 ### 渲染流程
 
@@ -126,8 +125,8 @@ dist/                       # 构建输出
 
 - **构建工具**: `bun build`（通过 `scripts/build.ts`）
 - **输出格式**: ESM (`dist/ofd.js`) + IIFE (`dist/ofd.min.js`，暴露 `window.OFD`)
-- **类型声明**: 通过 `tsc --emitDeclarationOnly` 从 `src/ofd/ofd.ts` 生成，再后处理移除 `calPageBox`/`calPageBoxScale`/`renderPage` 这三个内部 API 的声明
-- **入口**: `src/ofd/ofd.ts` → 构建后映射到 `dist/ofd.js` 和 `dist/ofd.min.js`
+- **类型声明**: 通过 `tsc --emitDeclarationOnly` 从 `src/ofd.ts` 生成，再后处理移除 `calPageBox`/`calPageBoxScale`/`renderPage` 这三个内部 API 的声明
+- **入口**: `src/ofd.ts` → 构建后映射到 `dist/ofd.js` 和 `dist/ofd.min.js`
 
 ## 主要依赖
 
@@ -245,12 +244,12 @@ dist/                       # 构建输出
 
 | 标准要求                  | 实现位置                                             | 状态 |
 | ------------------------- | ---------------------------------------------------- | ---- |
-| 签名列表 (Signatures.xml) | `ses_signature_parser.ts` → 解析                  | ✅   |
-| 签名文件结构 (18.2)       | `ses_signature_parser.ts`                          | ✅   |
-| 文件摘要 (18.2.1)         | `verify_signature_util.ts` → SM3/MD5/SHA1         | ✅   |
-| 签名验证 (SM2/RSA)        | `verify_signature_util.ts` + sm-crypto / 自实现 RSA | ✅   |
-| SES 电子印章              | `ses_signature_parser.ts` → ASN.1 解析（自实现解码器） | ✅   |
-| 签名外观 (SignedInfo)     | `ses_signature_parser.ts` → 印章图片提取          | ✅   |
+| 签名列表 (Signatures.xml) | `ofd_signature.ts` → 解析                  | ✅   |
+| 签名文件结构 (18.2)       | `ofd_signature.ts`                          | ✅   |
+| 文件摘要 (18.2.1)         | `signature_util.ts` → SM3/MD5/SHA1         | ✅   |
+| 签名验证 (SM2/RSA)        | `signature_util.ts` + sm-crypto / 自实现 RSA | ✅   |
+| SES 电子印章              | `ofd_signature.ts` → ASN.1 解析（自实现解码器） | ✅   |
+| 签名外观 (SignedInfo)     | `ofd_signature.ts` → 印章图片提取          | ✅   |
 
 ### 未实现的特性
 

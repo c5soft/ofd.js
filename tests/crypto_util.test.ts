@@ -1,5 +1,5 @@
 import {describe, it, expect} from "bun:test";
-import { sha1, md5, rsaVerifySHA1 } from "../src/ofd/crypto_util";
+import { sha1, md5, rsaVerifySHA1 } from "../src/utils/crypto_util";
 
 // SHA1 test vectors (FIPS 180-4)
 const sha1Tests: { input: string; expected: string }[] = [

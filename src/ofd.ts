@@ -45,7 +45,7 @@ if (typeof window !== 'undefined' && typeof global === 'undefined') {
 
 import { calPageBox, calPageBoxScale, renderPage } from "./ofd_render";
 import { parseOfdSteps } from "./ofd_parser";
-export { setPageScale, getPageScale } from "./ofd_util";
+export { setPageScale, getPageScale } from "./utils/ofd_util";
 
 // ---------------------------------------------------------------------------
 // 公共类型定义

@@ -11,14 +11,14 @@
  * OFD 文件本质上是 ZIP 容器，内部包含 XML 文件和资源文件。
  */
 
+import JsZip from "jszip";
 // fast-xml-parser - generic XML -> JSON parser
 // No OFD-specific logic here, just converts XML from OFD container to JSON
 import { XMLParser } from 'fast-xml-parser';
-import JsZip from "jszip";
-import { parseStBox, getExtensionByPath, replaceFirstSlash } from "./ofd_util";
-import { Jbig2Image } from '../jbig2/jbig2';
-import { parseSesSignature, digestCheckProcess } from "./ses_signature_parser";
-import type { DecodedSeal } from "./ses_signature_parser";
+import { parseStBox, getExtensionByPath, replaceFirstSlash } from "./utils/ofd_util";
+import { Jbig2Image } from './jbig2/jbig2';
+import { parseSesSignature, digestCheckProcess } from "./ofd_signature";
+import type { DecodedSeal } from "./ofd_signature";
 import type { OFDDocument, Page } from "./ofd";
 
 /**

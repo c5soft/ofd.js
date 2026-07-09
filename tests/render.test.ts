@@ -1,7 +1,7 @@
 import { describe, it, expect } from "bun:test";
 import { JSDOM } from 'jsdom';
-import { renderOfd, renderOfdByScale } from '../src/ofd/ofd';
-import type { OFDDocument } from '../src/ofd/ofd';
+import { renderOfd, renderOfdByScale } from '../src/ofd';
+import type { OFDDocument } from '../src/ofd';
 
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
 global.document = dom.window.document;

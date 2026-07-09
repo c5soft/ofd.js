@@ -32,9 +32,9 @@ import {
   setMaxPageScal,
   ST_Box,
   PathPoint,
-} from "./ofd_util";
+} from "./utils/ofd_util";
 import type { FontResObj, DrawParamResObj, MultiMediaResObj, Page } from "./ofd";
-import type { SES_Signature } from "./verify_signature_util";
+import type { SES_Signature } from "./utils/signature_util";
 
 /**
  * 计算页面盒子列表

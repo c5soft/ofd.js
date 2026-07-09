@@ -16,8 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`bun:test` 原生测试框架** - 完全移除 Jest 依赖
 - GitHub Actions CI/CD流程
 - CONTRIBUTING.md贡献指南
-- **自实现 ASN.1 DER 解码器** (`src/ofd/asn1_util.ts`) - 替代 `@lapo/asn1js`
-- **自实现 SHA1/MD5/RSA PKCS#1 v1.5** (`src/ofd/crypto_util.ts`) - 替代 `js-md5`/`js-sha1`/`jsrsasign`
+- **自实现 ASN.1 DER 解码器** (`src/utils/asn1_util.ts`) - 替代 `@lapo/asn1js`
+- **自实现 SHA1/MD5/RSA PKCS#1 v1.5** (`src/utils/crypto_util.ts`) - 替代 `js-md5`/`js-sha1`/`jsrsasign`
+- 公开导出补充类型: `PageContent`、`FontResObj`、`DrawParamResObj`、`MultiMediaResObj`
 
 ### Changed
 - **完全迁移到 TypeScript** - 已删除所有原始 JavaScript 目录 (`ofd_js/`, `jbig2_js/`)
@@ -26,12 +27,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **修复 SES 签名解析** - 增加 CMS ContentInfo 格式支持（建设银行电子签章格式）
 - **修复 OID 识别** - 识别 SM2 OID `1.2.156.10197.1.301.*`
 - 改进CLAUDE.md文档（更新目录结构和依赖）
+- **精简入口层级** - 删除 `src/index.ts`，由 `src/ofd.ts` 直接作为构建入口，内联 global polyfill
+- **扁平化目录结构** - `src/ofd/*.ts` 全部移至 `src/` 根目录
+- **重构工具函数目录** - 工具类文件移至 `src/utils/` (`ofd_util.ts`, `asn1_util.ts`, `crypto_util.ts`, `signature_util.ts`)
+- **重命名签名相关文件** - `ses_signature_parser.ts` → `ofd_signature.ts`，`verify_signature_util.ts` → `signature_util.ts`
+- **消除包装函数** - `setPageScale`/`getPageScale` 改为直接别名导出，去掉无意义的转发调用
 
 ### Removed
 - **移除所有 Jest 依赖** - 测试全部迁移到 `bun:test`
 - **移除四个外部依赖**: `@lapo/asn1js`, `js-md5`, `js-sha1`, `jsrsasign`
 - **删除原始 JavaScript 目录**: `ofd_js/` 和 `jbig2_js/` (迁移完成，不再需要参考)
 - 删除 `tests/setup.js` 和 `jest.config.js`
+- 删除 `src/index.ts`（入口合并到 `src/ofd.ts`）
 
 ### Fixed
 - LICENSE文件完整性（原为空）

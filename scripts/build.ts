@@ -21,7 +21,7 @@ async function buildDist(minify: boolean): Promise<void> {
   // Build IIFE format first (rename before ESM to avoid name collision)
   console.log("\n🔨 Building IIFE format...");
   const iifeArgs = [
-    "bun", "build", "src/ofd/ofd.ts",
+    "bun", "build", "src/ofd.ts",
     "--target=browser",
     "--format=iife",
     "--outdir=" + distDir,
@@ -51,13 +51,13 @@ async function buildDist(minify: boolean): Promise<void> {
   // Build ESM format
   console.log("\n🔨 Building ESM format...");
   // Externalize crypto - jsrsasign works without it in browsers
-  await $`bun build src/ofd/ofd.ts --target=browser --format=esm --external:crypto --outdir=${distDir}`;
+  await $`bun build src/ofd.ts --target=browser --format=esm --external:crypto --outdir=${distDir}`;
   console.log("✓ ESM build completed: dist/ofd.js");
 
   // Generate TypeScript declarations
   console.log("\n📝 Generating TypeScript declarations...");
   await $`bun x tsc --emitDeclarationOnly 2>/dev/null; true`;
-  const srcDecl = path.join(distDir, "src", "ofd", "ofd.d.ts");
+  const srcDecl = path.join(distDir, "src", "ofd.d.ts");
   const destDecl = path.join(distDir, "ofd.d.ts");
   if (await Bun.file(srcDecl).exists()) {
     let content = await Bun.file(srcDecl).text();

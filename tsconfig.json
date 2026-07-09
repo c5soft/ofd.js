@@ -14,7 +14,7 @@
     "declarationMap": false
   },
   "include": [
-    "src/ofd/ofd.ts",
+    "src/ofd.ts",
     "src/**/*.ts"
   ]
 }
